@@ -11,11 +11,11 @@
 #define IDX_WRIST        4
 
 // kinematics constants
-#define L1               19.6
-#define L2               15.8
-#define ELBOW_OFFSET     10.0
-#define DEG2RAD          (3.14159265/180.0)
-#define RAD2DEG          (180.0/3.14159265)
+#define ARM_L1               19.6
+#define ARM_L2               15.8
+#define ELBOW_OFFSET         10.0
+#define DEG2RAD              (3.14159265/180.0)
+#define RAD2DEG              (180.0/3.14159265)
 
 struct Point {
   float x, y;
