@@ -1,25 +1,84 @@
 #pragma once
-
 #include <Arduino.h>
-#include <ESP32Servo.h>
-#include "pi.h"
+#include "custom_servo.h"
 
-// ——————— CONFIG ———————
-// index constants
+// servo constants
+#define NUM_SERVOS       5
 #define IDX_BASE         0
 #define IDX_SHOULDER_L   1
 #define IDX_SHOULDER_R   2
 #define IDX_ELBOW        3
 #define IDX_WRIST        4
 
-// constraints from old code
-// Constants from your existing code
-#define NUM_SERVOS       5
-#define POS_TOLERANCE    0.5
-#define L1               16.0     // cm
-#define L2               14.5     // cm
-#define ELBOW_OFFSET     10.0     // degrees
+// kinematics constants
+#define L1               19.6
+#define L2               15.8
+#define ELBOW_OFFSET     10.0
 #define DEG2RAD          (3.14159265/180.0)
 #define RAD2DEG          (180.0/3.14159265)
 
+struct Point {
+  float x, y;
+  Point(float x = 0, float y = 0) : x(x), y(y) {}
+};
 
+class ServoController {
+private:
+  CustomServo servos[NUM_SERVOS];
+  CustomServo claw;
+  
+  float current_pos[NUM_SERVOS];
+  float target_pos[NUM_SERVOS];
+  float speed_cmd[NUM_SERVOS];
+  float max_speed[NUM_SERVOS];
+  float home_pos[NUM_SERVOS];
+  
+  unsigned long last_millis;
+  unsigned long last_ik_millis;
+  
+  // ik velocity mode
+  bool ik_vel_enabled;
+  float ik_target_x, ik_target_y;
+  float ik_vx, ik_vy;
+  
+  // wrist lock
+  bool wrist_lock_enabled;
+  float wrist_lock_offset;
+  
+  bool initialized;
+  
+  // helper methods
+  void updateMotion();
+  void applyWristLock();
+  void setShoulderTarget(float angle);
+  void setShoulderSpeed(float speed);
+
+public:
+  ServoController();
+  void init();
+  void update();
+  
+  // direct control methods
+  void setTarget(int idx, float angle);
+  void setSpeed(int idx, float speed);
+  void stopAll();
+  void resetPosition();
+  void zeroAllServos();
+  
+  // advanced control
+  void setGlobalPosition(float x, float y);
+  void setGlobalVelocity(float vx, float vy);
+  void setWristLock(bool enabled, float offset = 0);
+  void setClaw(float angle);
+  
+  // kinematics
+  Point forwardKinematics(float theta1, float theta2);
+  bool inverseKinematics(float x, float y, float &theta1, float &theta2);
+  
+  // status queries
+  Point getCurrentPosition();
+  bool isMoving() const;
+  
+  // debug
+  void printStatus();
+};
