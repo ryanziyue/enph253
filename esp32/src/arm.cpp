@@ -262,19 +262,19 @@ Point ServoController::forwardKinematics(float theta1, float theta2) {
   float phi = (ELBOW_OFFSET - theta2) * DEG2RAD;
   
   Point W;
-  W.x = L1 * cos(t1) + L2 * cos(t1 + phi);
-  W.y = L1 * sin(t1) + L2 * sin(t1 + phi);
+  W.x = ARM_L1 * cos(t1) + ARM_L2 * cos(t1 + phi);
+  W.y = ARM_L1 * sin(t1) + ARM_L2 * sin(t1 + phi);
   return W;
 }
 
 bool ServoController::inverseKinematics(float x, float y, float &theta1, float &theta2) {
   float r2 = x*x + y*y;
-  float cosPsi = (r2 - L1*L1 - L2*L2) / (2 * L1 * L2);
+  float cosPsi = (r2 - ARM_L1*ARM_L1 - ARM_L2*ARM_L2) / (2 * ARM_L1 * ARM_L2);
   if (cosPsi < -1.0 || cosPsi > 1.0) return false;
   
   float psi = acos(cosPsi);
   float alpha = atan2(y, x);
-  float beta = atan2(L2 * sin(psi), L1 + L2 * cos(psi));
+  float beta = atan2(ARM_L2 * sin(psi), ARM_L1 + ARM_L2 * cos(psi));
   
   theta1 = (alpha + beta) * RAD2DEG;
   theta2 = -psi * RAD2DEG;

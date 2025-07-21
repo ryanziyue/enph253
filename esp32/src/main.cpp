@@ -1,212 +1,179 @@
 #include <Arduino.h>
 #include "main.h"
 #include "arm.h"
+#include "motor.h"
+#include "linefollower.h"
+#include "pi.h"
 
-// create servo controller instance
+// Create controller instances
 ServoController arm;
+MotorController motors;
+LineFollower sensorLineFollower(&motors);
+PiComm piComm(&motors, &arm, &sensorLineFollower);
 
-void handleSerialCommand(String);
+// Limit switch variables
+bool lastLimitSwitchState = false;
+unsigned long lastLimitSwitchTime = 0;
+const unsigned long DEBOUNCE_DELAY = 50; // 50ms debounce
 
-int numTestPositions = 3;
-int currentTestPosition = 0;
-bool autoMode = false;
+// System state
+bool systemInitialized = false;
 
-// =====================
-// Original setup() commented out for IK velocity test
-/*
-void setup() {
-  // initialize serial communication
-  Serial.begin(115200);
-  Serial.println("ESP32 Robotic Arm - IK Position Control");
-  Serial.println("========================================");
-  
-  // initialize servo controller
-  arm.init();
-  
-  Serial.println("Setup complete! Ready for commands.");
-  Serial.println("");
-  Serial.println("Available Commands:");
-  Serial.println("  'x,y' - Move to position (e.g., '20,15' or '15.5,25.3')");
-  Serial.println("  'p' - Print current position");
-  Serial.println("  'h' - Move to home position (90° all joints)");
-  Serial.println("  's' - Print servo status");
-  Serial.println("  'c' - Test claw (open/close)");
-  Serial.println("  'auto' - Toggle automatic cycling between test positions");
-  Serial.println("  'stop' - Stop all movement");
-  Serial.println("");
-  Serial.println("Example: Type '20,15' to move wrist to (20cm, 15cm)");
-  Serial.println("Type 'p' to see current position");
-  Serial.println("");
-  
-  // start at home position
-  delay(1000);
-  arm.resetPosition();
-  Serial.println("Ready for commands!");
-}
-*/
-
-// IK velocity test setup
 void setup() {
   Serial.begin(115200);
-  Serial.println("ESP32 Robotic Arm - IK Velocity Test Mode");
-  Serial.println("=========================================");
   
+  Serial.println("ESP32 Robotic System with Serial Communication");
+  Serial.println("==============================================");
+  
+  // initialize limit switch pin
+  pinMode(LIMIT_SWITCH_PIN, INPUT_PULLUP);
+  
+  // initialize controllers
+  motors.init();
   arm.init();
+  
+  // configure sensor line follower default settings
+  // PID values are already set in linefollower.h (Kp=1.0, Ki=0.0, Kd=0.0)
+  sensorLineFollower.setBaseSpeed(150, 100);
+  
+  // configure sensor thresholds
+  motors.setSensorThreshold(MotorController::R1, 0.3);
+  motors.setSensorThreshold(MotorController::L1, 0.3);
+  motors.setSensorThreshold(MotorController::R2, 0.3);
+  motors.setSensorThreshold(MotorController::L2, 0.3);
+  
   delay(1000);
   arm.resetPosition();
   
-  Serial.println("Ready! Available commands:");
-  Serial.println("  h# - Move horizontally RIGHT for # seconds (e.g., h4)");
-  Serial.println("  h-# - Move horizontally LEFT for # seconds (e.g., h-4)");
-  Serial.println("  v# - Move vertically UP for # seconds (e.g., v3)");
-  Serial.println("  v-# - Move vertically DOWN for # seconds (e.g., v-3)");
-  Serial.println("  p - Print current position");
-  Serial.println("  zero - Zero all servos to 0 degrees");
-  Serial.println("  stop - Stop all movement");
+  systemInitialized = true;
+  
+  Serial.println("System ready! Listening for commands...");
   Serial.println("");
+  Serial.println("Available Pi Commands:");
+  Serial.println("MOTOR CONTROL:");
+  Serial.println("  PI:MC,x,y      - Set motor speeds (left, right)");
+  Serial.println("  PI:LF,x        - Toggle line following (1=on, 0=off)");
+  Serial.println("  PI:LFS,x       - Set line following speed");
+  Serial.println("");
+  Serial.println("ARM CONTROL:");
+  Serial.println("  PI:SP,a,b,c    - Set servo positions (base,shoulder,elbow)");
+  Serial.println("  PI:WP,a        - Set wrist position");
+  Serial.println("  PI:CP,a        - Set claw position");
+  Serial.println("  PI:GP,x,y      - Set global position (IK)");
+  Serial.println("  PI:GV,x,y      - Set global velocity (IK)");
+  Serial.println("");
+  Serial.println("Local Debug Commands:");
+  Serial.println("  status         - Show system status");
+  Serial.println("  sensors        - Show sensor readings");
+  Serial.println("  arm            - Show arm status");
+  Serial.println("  lf             - Show line follower status");
+  Serial.println("  test           - Test PI:STATUS command");
+  Serial.println("==============================================");
 }
 
-// =====================
-// Original loop() commented out for IK velocity test
-/*
 void loop() {
-  // always update the arm controller
+  if (!systemInitialized) return;
+  
+  // always update arm controller
   arm.update();
   
-  // check for serial input
+  // Handle serial commands (both Pi and local debug)
   if (Serial.available()) {
-    String input = Serial.readStringUntil('\n');
-    input.trim();
-    handleSerialCommand(input);
-  }
-  
-  // automatic cycling if enabled
-  if (autoMode) {
-    static unsigned long lastMove = 0;
-    if (millis() - lastMove > 4000) {  // move every 4 seconds
-      float x = testPositions[currentTestPosition][0];
-      float y = testPositions[currentTestPosition][1];
-      
-      Serial.print("Auto mode - moving to position ");
-      Serial.print(currentTestPosition + 1);
-      Serial.print(": (");
-      Serial.print(x);
-      Serial.print(", ");
-      Serial.print(y);
-      Serial.println(")");
-      
-      arm.setGlobalPosition(x, y);
-      
-      currentTestPosition = (currentTestPosition + 1) % numTestPositions;
-      lastMove = millis();
-    }
-  }
-  
-  delay(10);  // small delay for stability
-}
-*/
-
-// IK velocity test loop
-void loop() {
-  arm.update();
-  
-  if (Serial.available()) {
-    String input = Serial.readStringUntil('\n');
-    input.trim();
+    String command = Serial.readStringUntil('\n');
+    command.trim();
     
-    if (input.length() < 2) {
-      Serial.println("Invalid command. Use h#, h-#, v#, or v-# (e.g., h4, h-2, v3, v-1)");
-      return;
-    }
-    
-    char dir = tolower(input.charAt(0));
-    String durationStr = input.substring(1);
-    int duration = durationStr.toInt();
-    bool isNegative = durationStr.startsWith("-");
-    
-    if (isNegative) {
-      duration = abs(duration); // make duration positive for timing
-    }
-    
-    if (input == "p") {
-      // print current position
-      Point pos = arm.getCurrentPosition();
-      Serial.print("Current wrist position: (");
-      Serial.print(pos.x, 2);
-      Serial.print(", ");
-      Serial.print(pos.y, 2);
-      Serial.println(") cm");
-      
-    } else if (input == "stop") {
-      // stop all movement
-      arm.setGlobalVelocity(0, 0);
-      Serial.println("All movement stopped");
-      
-    } else if (input == "zero") {
-      // zero all servos
-      arm.zeroAllServos();
-      
-    } else if (duration > 0 && (dir == 'h' || dir == 'v')) {
-      float vx = 0, vy = 0;
-      
-      if (dir == 'h') {
-        vx = isNegative ? -2.0 : 2.0; // cm/s, left if negative, right if positive
-        vy = 0;
-        Serial.print("Moving horizontally ");
-        Serial.print(isNegative ? "LEFT" : "RIGHT");
-        Serial.print(" for ");
-      } else if (dir == 'v') {
-        vx = 0;
-        vy = isNegative ? -2.0 : 2.0; // cm/s, down if negative, up if positive
-        Serial.print("Moving vertically ");
-        Serial.print(isNegative ? "DOWN" : "UP");
-        Serial.print(" for ");
+    if (command.length() > 0) {
+      // Check if it's a Pi command or local debug command
+      if (command.startsWith("PI:")) {
+        // Handle Pi command
+        PiResponse response = piComm.processCommand(command);
+        piComm.sendResponse(response);
+      } else {
+        // Handle local debug command
+        handleLocalCommand(command);
       }
-      
-      Serial.print(duration);
-      Serial.println(" seconds");
-      
-      // start velocity movement
-      arm.setGlobalVelocity(vx, vy);
-      
-      // move for specified duration
-      unsigned long startTime = millis();
-      while (millis() - startTime < duration * 1000) {
-        arm.update();
-        delay(10);
-      }
-      
-      // stop movement
-      arm.setGlobalVelocity(0, 0);
-      Serial.println("Movement completed. Velocity stopped.");
-      
-      // show final position
-      Point pos = arm.getCurrentPosition();
-      Serial.print("Final position: (");
-      Serial.print(pos.x, 2);
-      Serial.print(", ");
-      Serial.print(pos.y, 2);
-      Serial.println(") cm");
-      
-    } else {
-      Serial.println("Unknown command! Use:");
-      Serial.println("  h# - horizontal RIGHT movement (e.g., h4)");
-      Serial.println("  h-# - horizontal LEFT movement (e.g., h-4)");
-      Serial.println("  v# - vertical UP movement (e.g., v3)");
-      Serial.println("  v-# - vertical DOWN movement (e.g., v-3)");
-      Serial.println("  p - print position");
-      Serial.println("  zero - zero all servos");
-      Serial.println("  stop - stop movement");
     }
   }
+  
+  // Check limit switch
+  checkLimitSwitch();
   
   delay(10);
 }
 
-// =====================
-// Original handleSerialCommand() commented out for IK velocity test
-/*
-void handleSerialCommand(String cmd) {
-  // ...existing code...
+void handleLocalCommand(String cmd) {
+  cmd.toLowerCase();
+  
+  if (cmd == "status") {
+    printSystemStatus();
+  }
+  else if (cmd == "sensors") {
+    motors.printSensorValues();
+  }
+  else if (cmd == "arm") {
+    arm.printStatus();
+  }
+  else if (cmd == "lf") {
+    sensorLineFollower.printStatus();
+  }
+  else if (cmd == "test") {
+    // Test Pi communication locally
+    Serial.println("Testing Pi command: PI:STATUS");
+    PiResponse response = piComm.processCommand("PI:STATUS");
+    piComm.sendResponse(response);
+  }
+  else {
+    Serial.println("Local commands: status, sensors, arm, lf, test");
+    Serial.println("Pi commands start with 'PI:'");
+  }
 }
-*/
+
+void checkLimitSwitch() {
+  bool currentState = !digitalRead(LIMIT_SWITCH_PIN); // Inverted because of pullup
+  unsigned long currentTime = millis();
+  
+  // Debounce the switch
+  if (currentState != lastLimitSwitchState && 
+      (currentTime - lastLimitSwitchTime) > DEBOUNCE_DELAY) {
+    
+    lastLimitSwitchState = currentState;
+    lastLimitSwitchTime = currentTime;
+    
+    // Send notification on rising edge (switch pressed)
+    if (currentState) {
+      piComm.sendLimitSwitchPressed();
+      
+      // Optional: Emergency stop on limit switch
+      // emergencyStop();
+    }
+  }
+}
+
+void printSystemStatus() {
+  Serial.println("\n=== SYSTEM STATUS ===");
+  Serial.print("System Initialized: "); Serial.println(systemInitialized ? "Yes" : "No");
+  Serial.print("Limit Switch: "); Serial.println(lastLimitSwitchState ? "PRESSED" : "Released");
+  
+  Serial.println("\n--- Motor Controller ---");
+  motors.printStatus();
+  
+  Serial.println("\n--- Line Follower ---");
+  sensorLineFollower.printStatus();
+  
+  Serial.println("\n--- Arm Controller ---");
+  arm.printStatus();
+  
+  Serial.println("=====================\n");
+}
+
+void emergencyStop() {
+  Serial.println("EMERGENCY STOP ACTIVATED!");
+  
+  // Stop all movement
+  motors.stop();
+  sensorLineFollower.stop();
+  arm.stopAll();
+  
+  // Send emergency notification to Pi
+  Serial.println("ESP:EMERGENCY_STOP");
+}
