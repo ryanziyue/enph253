@@ -19,6 +19,9 @@ const unsigned long DEBOUNCE_DELAY = 50; // 50ms debounce
 // system state
 bool systemInitialized = false;
 
+void checkLimitSwitch();
+void handleLocalCommand(String);
+
 void setup() {
   Serial.begin(115200);
   
