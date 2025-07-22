@@ -60,10 +60,13 @@ void setup() {
   Serial.println("");
   Serial.println("ARM CONTROL:");
   Serial.println("  PI:SP,a,b,c    - Set servo positions (base,shoulder,elbow)");
-  Serial.println("  PI:WP,a        - Set wrist position");
+  Serial.println("  PI:WP,a        - Set wrist position (temp disables lock for 5s)");
   Serial.println("  PI:CP,a        - Set claw position");
   Serial.println("  PI:GP,x,y      - Set global position (IK)");
   Serial.println("  PI:GV,x,y      - Set global velocity (IK)");
+  Serial.println("  PI:WLT,1/0     - Toggle wrist lock (1=on, 0=off) [default: ON]");
+  Serial.println("  PI:WLA,angle   - Set wrist lock angle (-45 to 45°, 0=level)");
+  Serial.println("  PI:WLTD,ms     - Temporarily disable wrist lock for ms milliseconds");
   Serial.println("");
   Serial.println("Local Debug Commands:");
   Serial.println("  status         - Show system status");
