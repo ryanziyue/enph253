@@ -39,6 +39,15 @@ PiResponse PiComm::processCommand(const String& cmd) {
   else if (cmd.startsWith("PI:GV,")) {
     return handleGlobalVelocityCommand(cmd);
   }
+  else if (cmd.startsWith("PI:WLT,")) {
+    return handleWristLockToggle(cmd);
+  }
+  else if (cmd.startsWith("PI:WLA,")) {
+    return handleWristLockAngle(cmd);
+  }
+  else if (cmd.startsWith("PI:WLTD,")) {
+    return handleWristLockTempDisable(cmd);
+  }
   
   // STATUS REQUESTS
   else if (cmd.equals("PI:STATUS")) {
@@ -157,11 +166,11 @@ PiResponse PiComm::handleWristPositionCommand(const String& cmd) {
     return PiResponse(false, "Invalid wrist position format. Use PI:WP,position");
   }
   
-  // disable wrist lock if it's enabled, then set position
-  servos->setWristLock(false);
+  // Temporarily disable wrist lock for manual control (will re-engage after 5 seconds)
+  servos->temporarilyDisableWristLock(WRIST_DISABLE_TIME);
   servos->setTarget(IDX_WRIST, wristPos);
   
-  return PiResponse(true, "Wrist position set to " + String(wristPos) + "°");
+  return PiResponse(true, "Wrist position set to " + String(wristPos) + "° (wrist lock will re-engage in 5s)");
 }
 
 PiResponse PiComm::handleClawPositionCommand(const String& cmd) {
@@ -201,6 +210,52 @@ PiResponse PiComm::handleGlobalVelocityCommand(const String& cmd) {
   return PiResponse(true, "Global velocity set to (" + String(vx, 2) + "," + String(vy, 2) + ")");
 }
 
+PiResponse PiComm::handleWristLockToggle(const String& cmd) {
+  // parse: PI:WLT,x (1=enable, 0=disable)
+  int toggle = 0;
+  if (sscanf(cmd.c_str(), "PI:WLT,%d", &toggle) != 1) {
+    return PiResponse(false, "Invalid wrist lock toggle format. Use PI:WLT,1 or PI:WLT,0");
+  }
+  
+  if (toggle == 1) {
+    servos->setWristLock(true, servos->getWristLockAngle());
+    return PiResponse(true, "Wrist lock enabled at " + String(servos->getWristLockAngle()) + "°");
+  } else if (toggle == 0) {
+    servos->setWristLock(false);
+    return PiResponse(true, "Wrist lock disabled");
+  } else {
+    return PiResponse(false, "Invalid toggle value. Use 1 (enable) or 0 (disable)");
+  }
+}
+
+PiResponse PiComm::handleWristLockAngle(const String& cmd) {
+  // parse: PI:WLA,angle
+  float angle = 0;
+  if (sscanf(cmd.c_str(), "PI:WLA,%f", &angle) != 1) {
+    return PiResponse(false, "Invalid wrist lock angle format. Use PI:WLA,angle");
+  }
+  
+  servos->setWristLockAngle(angle);
+  
+  String status = servos->getWristLockAngle() == angle ? "" : " (clamped)";
+  return PiResponse(true, "Wrist lock angle set to " + String(servos->getWristLockAngle()) + "°" + status);
+}
+
+PiResponse PiComm::handleWristLockTempDisable(const String& cmd) {
+  // parse: PI:WLTD,duration_ms
+  int duration = 5000;  // default 5 seconds
+  if (sscanf(cmd.c_str(), "PI:WLTD,%d", &duration) != 1) {
+    return PiResponse(false, "Invalid temp disable format. Use PI:WLTD,duration_ms");
+  }
+  
+  // Clamp duration to reasonable limits (100ms to 30 seconds)
+  duration = constrain(duration, 100, 30000);
+  
+  servos->temporarilyDisableWristLock(duration);
+  
+  return PiResponse(true, "Wrist lock temporarily disabled for " + String(duration) + "ms");
+}
+
 // ------- STATUS AND UTILITY COMMANDS ------- 
 
 PiResponse PiComm::handleStatusRequest(const String& cmd) {
@@ -222,14 +277,14 @@ void PiComm::sendResponse(const PiResponse& response) {
   if (response.success) {
     if (response.data.length() > 0) {
       // send data response (like status)
-      Serial1.println("ESP:" + response.data);
+      Serial.println("ESP:" + response.data);
     } else {
       // send acknowledgment
-      Serial1.println("OK: " + response.message);
+      Serial.println("OK: " + response.message);
     }
   } else {
     // error
-    Serial1.println("ERROR: " + response.message);
+    Serial.println("ERROR: " + response.message);
   }
   
   // also log to serial for debugging
@@ -244,11 +299,11 @@ void PiComm::sendResponse(const PiResponse& response) {
 void PiComm::sendPositionUpdate() {
   Point pos = servos->getCurrentPosition();
   String posData = "ESP:" + String(pos.x, 2) + "," + String(pos.y, 2);
-  Serial1.println(posData);
+  Serial.println(posData);
 }
 
 void PiComm::sendLimitSwitchPressed() {
-  Serial1.println("ESP:LS");
+  Serial.println("ESP:LS");
   Serial.println("Limit switch pressed - notification sent to Pi");
 }
 
