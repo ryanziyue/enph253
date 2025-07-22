@@ -8,17 +8,6 @@ private:
   int current_right_speed;
 
 public:
-  // pin and channel definitions
-  static const int ANALOG_PIN_R1 = 37;
-  static const int ANALOG_PIN_L1 = 38;
-  static const int ANALOG_PIN_R2 = 34;
-  static const int ANALOG_PIN_L2 = 35;
-  
-  static const uint8_t M1_CHAN_FWD = 0;
-  static const uint8_t M1_CHAN_REV = 1;
-  static const uint8_t M2_CHAN_FWD = 2;
-  static const uint8_t M2_CHAN_REV = 3;
-
   // sensor constants
   static const int R1 = 0, L1 = 1, R2 = 2, L2 = 3;
   float sensorVoltages[4] = {0.0, 0.0, 0.0, 0.0};
