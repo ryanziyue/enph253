@@ -33,7 +33,7 @@ void ServoController::init() {
   
   // attach servos
   for (int i = 0; i < NUM_SERVOS; i++) {
-    if (!servos[i].attach(servo_pins[i], i)) {  // pin and channel
+    if (!servos[i].attach(servo_pins[i], i + 4)) {  // pin and channel
       Serial.print("Failed to attach servo ");
       Serial.println(i);
       return;
@@ -43,7 +43,7 @@ void ServoController::init() {
   }
   
   // attach claw
-  if (!claw.attach(SERVO_CLAW_PIN, NUM_SERVOS)) {  // pin and channel
+  if (!claw.attach(SERVO_CLAW_PIN, 9)) {  // pin and channel
     Serial.println("Failed to attach claw servo");
     return;
   }
