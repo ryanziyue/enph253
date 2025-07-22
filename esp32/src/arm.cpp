@@ -3,7 +3,7 @@
 
 ServoController::ServoController() : last_millis(0), last_ik_millis(0),
     ik_vel_enabled(false), ik_target_x(0), ik_target_y(0), ik_vx(0), ik_vy(0),
-    wrist_lock_enabled(false), wrist_lock_offset(0), initialized(false) {
+    wrist_lock_enabled(true), wrist_lock_angle(0), wrist_lock_disable_until(0), initialized(false) {
   
   // set max speeds
   max_speed[IDX_BASE] = 45.0;
@@ -59,6 +59,7 @@ void ServoController::init() {
   
   initialized = true;
   Serial.println("Servo controller initialized with custom servo library");
+  Serial.println("Wrist lock enabled by default at 0° (level with ground)");
 }
 
 void ServoController::update() {
@@ -105,7 +106,7 @@ void ServoController::updateMotion() {
   
   // update all joints except wrist if lock is on
   for (int i = 0; i < NUM_SERVOS; i++) {
-    if (wrist_lock_enabled && i == IDX_WRIST) continue;
+    if (wrist_lock_enabled && i == IDX_WRIST && millis() >= wrist_lock_disable_until) continue;
     
     // drive target by speed command
     if (fabs(speed_cmd[i]) > 1e-3) {
@@ -225,15 +226,38 @@ void ServoController::setGlobalVelocity(float vx, float vy) {
   Serial.print("GV enabled: vx="); Serial.print(vx); Serial.print(" vy="); Serial.println(vy);
 }
 
-void ServoController::setWristLock(bool enabled, float offset) {
+void ServoController::setWristLock(bool enabled, float angle_degrees) {
   wrist_lock_enabled = enabled;
-  wrist_lock_offset = offset;
+  wrist_lock_angle = constrain(angle_degrees, WRIST_LOWER_LIMIT, WRIST_UPPER_LIMIT);  // Reasonable limits
   
   if (enabled) {
-    Serial.print("Wrist lock enabled, offset: "); Serial.println(offset);
+    Serial.print("Wrist lock enabled at "); 
+    Serial.print(wrist_lock_angle); 
+    Serial.println("° relative to horizontal");
   } else {
     Serial.println("Wrist lock disabled");
   }
+}
+
+void ServoController::setWristLockAngle(float angle_degrees) {
+  wrist_lock_angle = constrain(angle_degrees, WRIST_LOWER_LIMIT, WRIST_UPPER_LIMIT);
+  
+  if (wrist_lock_enabled) {
+    Serial.print("Wrist lock angle updated to "); 
+    Serial.print(wrist_lock_angle); 
+    Serial.println("° relative to horizontal");
+  } else {
+    Serial.print("Wrist lock angle set to "); 
+    Serial.print(wrist_lock_angle); 
+    Serial.println("° (will apply when lock is enabled)");
+  }
+}
+
+void ServoController::temporarilyDisableWristLock(int duration_ms) {
+  wrist_lock_disable_until = millis() + duration_ms;
+  Serial.print("Wrist lock temporarily disabled for ");
+  Serial.print(duration_ms);
+  Serial.println("ms");
 }
 
 void ServoController::setClaw(float angle) {
@@ -244,11 +268,19 @@ void ServoController::setClaw(float angle) {
 }
 
 void ServoController::applyWristLock() {
+  // Check if temporarily disabled
+  if (millis() < wrist_lock_disable_until) {
+    return;  // Skip wrist lock while temporarily disabled
+  }
+  
   if (!wrist_lock_enabled) return;
   
-  float angle_1 = current_pos[IDX_SHOULDER_L];
-  float angle_2 = current_pos[IDX_ELBOW];
-  float lockAng = 50.0 - angle_1 + angle_2 + wrist_lock_offset;
+  float angle_1 = current_pos[IDX_SHOULDER_L];  // Shoulder angle
+  float angle_2 = current_pos[IDX_ELBOW];       // Elbow angle
+  
+  // formula: 50.0 - angle_1 + angle_2 gives horizontal orientation (0°)
+  // adding wrist_lock_angle tilts the wrist by that amount from horizontal
+  float lockAng = 50.0 - angle_1 + angle_2 + wrist_lock_angle;
   lockAng = constrain(lockAng, 0.0, 180.0);
   
   servos[IDX_WRIST].write(lockAng);
@@ -305,6 +337,21 @@ void ServoController::printStatus() {
   Serial.print("Wrist: ("); Serial.print(pos.x); Serial.print(", "); Serial.print(pos.y); Serial.println(")");
   Serial.print("Moving: "); Serial.println(isMoving() ? "YES" : "NO");
   Serial.print("IK velocity: "); Serial.println(ik_vel_enabled ? "ENABLED" : "DISABLED");
-  Serial.print("Wrist lock: "); Serial.println(wrist_lock_enabled ? "ENABLED" : "DISABLED");
+  
+  // Enhanced wrist lock status with temporary disable info
+  if (millis() < wrist_lock_disable_until) {
+    unsigned long remaining = wrist_lock_disable_until - millis();
+    Serial.print("Wrist lock: TEMPORARILY DISABLED (");
+    Serial.print(remaining);
+    Serial.println("ms remaining)");
+  } else if (wrist_lock_enabled) {
+    Serial.print("Wrist lock: ENABLED at "); 
+    Serial.print(wrist_lock_angle); 
+    Serial.println("° relative to horizontal");
+  } else {
+    Serial.print("Wrist lock: DISABLED (angle set to "); 
+    Serial.print(wrist_lock_angle); 
+    Serial.println("°)");
+  }
   Serial.println("==================");
 }
