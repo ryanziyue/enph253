@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include "custom_servo.h"
 
-// servo constants
+// servo pins
 #define NUM_SERVOS       5
 #define IDX_BASE         0
 #define IDX_SHOULDER_L   1
@@ -16,6 +16,8 @@
 #define ELBOW_OFFSET         10.0
 #define DEG2RAD              (3.14159265/180.0)
 #define RAD2DEG              (180.0/3.14159265)
+#define WRIST_LOWER_LIMIT    -45
+#define WRIST_UPPER_LIMIT     45
 
 struct Point {
   float x, y;
@@ -43,7 +45,8 @@ private:
   
   // wrist lock
   bool wrist_lock_enabled;
-  float wrist_lock_offset;
+  float wrist_lock_angle;  // Desired wrist angle relative to horizontal (0 = level)
+  unsigned long wrist_lock_disable_until;  // Timestamp when temporary disable expires
   
   bool initialized;
   
@@ -68,7 +71,10 @@ public:
   // advanced control
   void setGlobalPosition(float x, float y);
   void setGlobalVelocity(float vx, float vy);
-  void setWristLock(bool enabled, float offset = 0);
+  void setWristLock(bool enabled, float angle_degrees = 0);  // angle relative to horizontal
+  void setWristLockAngle(float angle_degrees);  // Just change the angle without toggling lock
+  float getWristLockAngle() const { return wrist_lock_angle; }  // Get current lock angle
+  void temporarilyDisableWristLock(int duration_ms = 5000);  // Temporarily disable for manual control
   void setClaw(float angle);
   
   // kinematics
