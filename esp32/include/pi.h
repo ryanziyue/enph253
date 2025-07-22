@@ -4,6 +4,8 @@
 #include "arm.h"
 #include "linefollower.h"
 
+#define WRIST_DISABLE_TIME 5000
+
 // response structure for pi commands
 struct PiResponse {
   bool success;
@@ -32,6 +34,9 @@ private:
   PiResponse handleClawPositionCommand(const String& cmd);   // PI:CP,a
   PiResponse handleGlobalPositionCommand(const String& cmd); // PI:GP,x,y
   PiResponse handleGlobalVelocityCommand(const String& cmd); // PI:GV,x,y
+  PiResponse handleWristLockToggle(const String& cmd);       // PI:WLT,1/0
+  PiResponse handleWristLockAngle(const String& cmd);        // PI:WLA,angle
+  PiResponse handleWristLockTempDisable(const String& cmd);  // PI:WLTD,duration_ms
   
   // status and utility
   PiResponse handleStatusRequest(const String& cmd);
