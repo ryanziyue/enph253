@@ -5,18 +5,18 @@
 #include "linefollower.h"
 #include "pi.h"
 
-// Create controller instances
+// create controller instances
 ServoController arm;
 MotorController motors;
 LineFollower sensorLineFollower(&motors);
 PiComm piComm(&motors, &arm, &sensorLineFollower);
 
-// Limit switch variables
+// limit switch variables
 bool lastLimitSwitchState = false;
 unsigned long lastLimitSwitchTime = 0;
 const unsigned long DEBOUNCE_DELAY = 50; // 50ms debounce
 
-// System state
+// system state
 bool systemInitialized = false;
 
 void setup() {
