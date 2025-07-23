@@ -1,4 +1,6 @@
+// linefollower.cpp - Fixed version
 #include "linefollower.h"
+#include "main.h"
 
 LineFollower::LineFollower(MotorController* motorController) : motors(motorController) {
   if (!motors) {
@@ -60,7 +62,37 @@ void LineFollower::stop() {
   if (motors) {
     motors->stop();
   }
-  
+}
+
+void LineFollower::updateSensors() {
+  int rawR1 = analogRead(ANALOG_PIN_R1);
+  int rawL1 = analogRead(ANALOG_PIN_L1);
+  int rawR2 = analogRead(ANALOG_PIN_R2);
+  int rawL2 = analogRead(ANALOG_PIN_L2);
+
+  // convert to voltage
+  sensorVoltages[R1] = rawR1 * 3.3 / 4095.0;
+  sensorVoltages[L1] = rawL1 * 3.3 / 4095.0;
+  sensorVoltages[R2] = rawR2 * 3.3 / 4095.0;
+  sensorVoltages[L2] = rawL2 * 3.3 / 4095.0;
+}
+
+bool LineFollower::offLine(int sensor) {
+  if (sensor < 0 || sensor > 3) return false;
+  return (sensorVoltages[sensor] > sensorThresholds[sensor]);
+}
+
+float LineFollower::getSensorVoltage(int sensor) const {
+  if (sensor >= 0 && sensor < 4) {
+    return sensorVoltages[sensor];
+  }
+  return 0.0;
+}
+
+void LineFollower::setSensorThreshold(int sensor, float threshold) {
+  if (sensor >= 0 && sensor < 4) {
+    sensorThresholds[sensor] = threshold;
+  }
 }
 
 void LineFollower::lineFollowTaskWrapper(void* parameter) {
@@ -75,29 +107,42 @@ void LineFollower::lineFollowLoop() {
   
   for (;;) {
     // Update sensors
-    motors->updateSensors();
+    updateSensors();
     
     // Calculate delta time
     unsigned long currentTime = millis();
-    float deltaTime = (currentTime - lastTime) / 1000.0; // Convert to seconds
+    float deltaTime = (currentTime - lastTime) / 1000.0;
     lastTime = currentTime;
     
-    // Determine turn direction based on outer sensors
-    if (!motors->offLine(MotorController::R2)) {
+    // Determine turn direction based on outer sensors (same as working code)
+    if (!offLine(R2)) {
       leftTurn = false;
-    } else if (!motors->offLine(MotorController::L2)) {
+    } else if (!offLine(L2)) {
       leftTurn = true;
     }
     
     // Check if both inner sensors are off the line
-    if (motors->offLine(MotorController::R1) && motors->offLine(MotorController::L1)) {
-      handleOffLine();
+    if (offLine(R1) && offLine(L1)) {
+      // OFF-LINE HANDLING - Fixed to match working code behavior
+      if (leftTurn) {
+        // Turn left: left motor backward, right motor forward
+        motors->setMotors(-searchSpeed, searchSpeed);
+      } else {
+        // Turn right: left motor forward, right motor backward  
+        motors->setMotors(searchSpeed, -searchSpeed);
+      }
     } else {
       // Normal PID line following
       float currentPosition = getCurrentPosition();
-      float pidOutput = calculatePIDOutput(currentPosition, deltaTime);
       
-      // Apply PID output to motors
+      // Fixed error calculation to match working code
+      // Working code uses: error = currentPosition (target implicitly 0)
+      // Our target is 0 by default, so: error = currentPosition - 0 = currentPosition
+      float error = currentPosition - targetPosition;
+      
+      float pidOutput = calculatePIDOutput(error, deltaTime);
+      
+      // Apply PID output to motors (same as working code)
       int leftSpeed = baseSpeed + (int)pidOutput;
       int rightSpeed = baseSpeed - (int)pidOutput;
       
@@ -108,9 +153,7 @@ void LineFollower::lineFollowLoop() {
   }
 }
 
-float LineFollower::calculatePIDOutput(float currentPosition, float deltaTime) {
-  float error = currentPosition - targetPosition;
-  
+float LineFollower::calculatePIDOutput(float error, float deltaTime) {
   // Integral term with windup protection
   integral += error * deltaTime;
   integral = constrain(integral, -100, 100);
@@ -127,31 +170,10 @@ float LineFollower::calculatePIDOutput(float currentPosition, float deltaTime) {
   return output;
 }
 
-void LineFollower::handleOffLine() {
-  // Robot is completely off the line - implement search pattern
-  // This is a simple left/right search - you can make it more sophisticated
-  
-  static bool searchLeft = true;
-  static unsigned long searchStartTime = millis();
-  
-  // Search for 500ms in each direction
-  if (millis() - searchStartTime > 500) {
-    searchLeft = !searchLeft;
-    searchStartTime = millis();
-  }
-  
-  if (searchLeft) {
-    // Turn left
-    motors->setMotors(-searchSpeed, searchSpeed);
-  } else {
-    // Turn right  
-    motors->setMotors(searchSpeed, -searchSpeed);
-  }
-}
+// REMOVED: handleOffLine() method - now handled directly in main loop
 
 float LineFollower::getCurrentPosition() {
-  return motors->getSensorVoltage(MotorController::L1) - 
-         motors->getSensorVoltage(MotorController::R1);
+  return sensorVoltages[L1] - sensorVoltages[R1];  // Same as working code
 }
 
 void LineFollower::setPID(float kp, float ki, float kd) {
@@ -160,11 +182,8 @@ void LineFollower::setPID(float kp, float ki, float kd) {
   Kd = kd;
 }
 
-void LineFollower::setBaseSpeed(int base, int min) {
+void LineFollower::setBaseSpeed(int base) {
   baseSpeed = constrain(base, 0, 255);
-  if (min >= 0) {
-    minSpeed = constrain(min, 0, baseSpeed);
-  }
 }
 
 void LineFollower::setSearchSpeed(int speed) {
@@ -179,6 +198,15 @@ void LineFollower::resetPID() {
   integral = 0.0;
   previousError = 0.0;
   Serial.println("Line Follower PID reset");
+}
+
+void LineFollower::printSensorValues() {
+  updateSensors();
+  Serial.print("Sensors - R1: "); Serial.print(sensorVoltages[R1], 3);
+  Serial.print(" | L1: "); Serial.print(sensorVoltages[L1], 3);
+  Serial.print(" | R2: "); Serial.print(sensorVoltages[R2], 3);
+  Serial.print(" | L2: "); Serial.print(sensorVoltages[L2], 3);
+  Serial.print(" | Position: "); Serial.println(sensorVoltages[L1] - sensorVoltages[R1], 3);
 }
 
 void LineFollower::printStatus() {
