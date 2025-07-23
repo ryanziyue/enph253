@@ -296,6 +296,7 @@ Point ServoController::forwardKinematics(float theta1, float theta2) {
   Point W;
   W.x = ARM_L1 * cos(t1) + ARM_L2 * cos(t1 + phi);
   W.y = ARM_L1 * sin(t1) + ARM_L2 * sin(t1 + phi);
+  
   return W;
 }
 

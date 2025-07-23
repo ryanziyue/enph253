@@ -5,7 +5,6 @@ PiComm::PiComm(MotorController* motor_ctrl, ServoController* servo_ctrl, LineFol
   : motors(motor_ctrl), servos(servo_ctrl), lineFollower(line_follower) {}
 
 PiResponse PiComm::processCommand(const String& cmd) {
-  Serial.print("Processing Pi command: ");
   Serial.println(cmd);
   
   if (!isValidCommand(cmd)) {
@@ -70,7 +69,6 @@ PiResponse PiComm::handleMotorCommand(const String& cmd) {
   // stop line following manual motor control takes priority
   if (lineFollower && lineFollower->isRunning()) {
     lineFollower->stop();
-    Serial.println("Line following stopped for manual motor control");
   }
   
   // Execute command
@@ -286,14 +284,6 @@ void PiComm::sendResponse(const PiResponse& response) {
     // error
     Serial.println("ERROR: " + response.message);
   }
-  
-  // also log to serial for debugging
-  Serial.print("Response: ");
-  Serial.println(response.success ? "SUCCESS" : "FAILED");
-  Serial.println("  Message: " + response.message);
-  if (response.data.length() > 0) {
-    Serial.println("  Data: " + response.data);
-  }
 }
 
 void PiComm::sendPositionUpdate() {
@@ -304,7 +294,6 @@ void PiComm::sendPositionUpdate() {
 
 void PiComm::sendLimitSwitchPressed() {
   Serial.println("ESP:LS");
-  Serial.println("Limit switch pressed - notification sent to Pi");
 }
 
 bool PiComm::isValidCommand(const String& cmd) {

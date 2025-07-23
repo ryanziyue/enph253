@@ -25,9 +25,6 @@ void handleLocalCommand(String);
 void setup() {
   Serial.begin(115200);
   
-  Serial.println("ESP32 Robotic System with Serial Communication");
-  Serial.println("==============================================");
-  
   // initialize limit switch pin
   pinMode(LIMIT_SWITCH_PIN, INPUT_PULLUP);
   
@@ -50,31 +47,7 @@ void setup() {
   
   systemInitialized = true;
   
-  Serial.println("System ready! Listening for commands...");
-  Serial.println("");
-  Serial.println("Available Pi Commands:");
-  Serial.println("MOTOR CONTROL:");
-  Serial.println("  PI:MC,x,y      - Set motor speeds (left, right)");
-  Serial.println("  PI:LF,x        - Toggle line following (1=on, 0=off)");
-  Serial.println("  PI:LFS,x       - Set line following speed");
-  Serial.println("");
-  Serial.println("ARM CONTROL:");
-  Serial.println("  PI:SP,a,b,c    - Set servo positions (base,shoulder,elbow)");
-  Serial.println("  PI:WP,a        - Set wrist position (temp disables lock for 5s)");
-  Serial.println("  PI:CP,a        - Set claw position");
-  Serial.println("  PI:GP,x,y      - Set global position (IK)");
-  Serial.println("  PI:GV,x,y      - Set global velocity (IK)");
-  Serial.println("  PI:WLT,1/0     - Toggle wrist lock (1=on, 0=off) [default: ON]");
-  Serial.println("  PI:WLA,angle   - Set wrist lock angle (-45 to 45°, 0=level)");
-  Serial.println("  PI:WLTD,ms     - Temporarily disable wrist lock for ms milliseconds");
-  Serial.println("");
-  Serial.println("Local Debug Commands:");
-  Serial.println("  status         - Show system status");
-  Serial.println("  sensors        - Show sensor readings");
-  Serial.println("  arm            - Show arm status");
-  Serial.println("  lf             - Show line follower status");
-  Serial.println("  test           - Test PI:STATUS command");
-  Serial.println("==============================================");
+  Serial.println("System ready! Listening for commands");
 }
 
 void loop() {
