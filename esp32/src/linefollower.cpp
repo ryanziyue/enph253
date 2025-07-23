@@ -2,7 +2,7 @@
 
 LineFollower::LineFollower(MotorController* motorController) : motors(motorController) {
   if (!motors) {
-    Serial.println("Error: MotorController pointer is null!");
+    // Serial.println("Error: MotorController pointer is null!");
   }
 }
 
@@ -12,12 +12,12 @@ LineFollower::~LineFollower() {
 
 bool LineFollower::start() {
   if (running) {
-    Serial.println("Line follower already running");
+    // Serial.println("Line follower already running");
     return true;
   }
   
   if (!motors) {
-    Serial.println("Error: No motor controller available");
+    // Serial.println("Error: No motor controller available");
     return false;
   }
   
@@ -37,10 +37,10 @@ bool LineFollower::start() {
   
   if (result == pdPASS) {
     running = true;
-    Serial.println("Sensor-based line following started");
+    // Serial.println("Sensor-based line following started");
     return true;
   } else {
-    Serial.println("Failed to create line following task");
+    // Serial.println("Failed to create line following task");
     return false;
   }
 }
@@ -61,7 +61,6 @@ void LineFollower::stop() {
     motors->stop();
   }
   
-  Serial.println("Sensor-based line following stopped");
 }
 
 void LineFollower::lineFollowTaskWrapper(void* parameter) {
@@ -73,8 +72,6 @@ void LineFollower::lineFollowLoop() {
   const int loopDelay = 10; // milliseconds
   unsigned long lastTime = millis();
   bool leftTurn = true;
-  
-  Serial.println("Line following loop started");
   
   for (;;) {
     // Update sensors
@@ -153,20 +150,14 @@ void LineFollower::handleOffLine() {
 }
 
 float LineFollower::getCurrentPosition() {
-  return motors->getSensorVoltage(MotorController::R1) - 
-         motors->getSensorVoltage(MotorController::L1);
+  return motors->getSensorVoltage(MotorController::L1) - 
+         motors->getSensorVoltage(MotorController::R1);
 }
 
 void LineFollower::setPID(float kp, float ki, float kd) {
   Kp = kp;
   Ki = ki;
   Kd = kd;
-  Serial.print("Line Follower PID: Kp=");
-  Serial.print(Kp);
-  Serial.print(", Ki=");
-  Serial.print(Ki);
-  Serial.print(", Kd=");
-  Serial.println(Kd);
 }
 
 void LineFollower::setBaseSpeed(int base, int min) {
