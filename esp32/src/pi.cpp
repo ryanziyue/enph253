@@ -113,11 +113,15 @@ PiResponse PiComm::handleLineFollowSpeed(const String& cmd) {
     return PiResponse(false, "Line follower not available");
   }
   
-  // Set base speed (assuming min speed is 80% of base speed)
-  int minSpeed = speed * 0.8;
-  lineFollower->setBaseSpeed(speed, minSpeed);
+  // Set base speed in LineFollower
+  lineFollower->setBaseSpeed(speed);
   
-  return PiResponse(true, "Line follow speed set to " + String(speed));
+  // Set minimum speed in MotorController (80% of base speed)
+  int minSpeed = speed * 0.8;
+  motors->setMinSpeed(minSpeed);
+  
+  return PiResponse(true, "Line follow speed set to " + String(speed) + 
+                         " (min: " + String(minSpeed) + ")");
 }
 
 // ------- ARM CONTROL COMMANDS ------- 
@@ -262,10 +266,13 @@ PiResponse PiComm::handleStatusRequest(const String& cmd) {
   String lfStatus = lineFollower ? (lineFollower->isRunning() ? "ON" : "OFF") : "N/A";
   String motorStatus = "L=" + String(motors->getLeftSpeed()) + " R=" + String(motors->getRightSpeed());
   
+  // Add speed constraint info
+  String speedLimits = " Min=" + String(motors->getMinSpeed()) + " Max=" + String(motors->getMaxSpeed());
+  
   // format response data
   String statusData = "Pos:(" + String(pos.x, 2) + "," + String(pos.y, 2) + ") " +
                      "LF:" + lfStatus + " " +
-                     "Motors:" + motorStatus;
+                     "Motors:" + motorStatus + speedLimits;
   
   return PiResponse(true, "System status", statusData);
 }

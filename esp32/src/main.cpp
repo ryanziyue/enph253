@@ -32,15 +32,18 @@ void setup() {
   motors.init();
   arm.init();
   
-  // configure sensor line follower default settings
-  // PID values are already set in linefollower.h (Kp=1.0, Ki=0.0, Kd=0.0)
-  sensorLineFollower.setBaseSpeed(150, 100);
+  // configure motor speed constraints (new functionality)
+  motors.setMinSpeed(100);  // Minimum effective speed
+  motors.setMaxSpeed(255);  // Maximum speed limit
   
-  // configure sensor thresholds
-  motors.setSensorThreshold(MotorController::R1, 0.3);
-  motors.setSensorThreshold(MotorController::L1, 0.3);
-  motors.setSensorThreshold(MotorController::R2, 0.3);
-  motors.setSensorThreshold(MotorController::L2, 0.3);
+  // configure sensor line follower default settings
+  sensorLineFollower.setBaseSpeed(150);  // Removed minSpeed parameter
+  
+  // configure sensor thresholds - now through LineFollower
+  sensorLineFollower.setSensorThreshold(LineFollower::R1, 0.3);
+  sensorLineFollower.setSensorThreshold(LineFollower::L1, 0.3);
+  sensorLineFollower.setSensorThreshold(LineFollower::R2, 0.3);
+  sensorLineFollower.setSensorThreshold(LineFollower::L2, 0.3);
   
   delay(1000);
   arm.resetPosition();
@@ -87,7 +90,7 @@ void handleLocalCommand(String cmd) {
     printSystemStatus();
   }
   else if (cmd == "sensors") {
-    motors.printSensorValues();
+    sensorLineFollower.printSensorValues();  // Now called on LineFollower
   }
   else if (cmd == "arm") {
     arm.printStatus();
