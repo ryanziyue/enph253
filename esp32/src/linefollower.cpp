@@ -1,11 +1,22 @@
-// linefollower.cpp - Fixed version
+// linefollower.cpp - Fixed to match working LINE_FOLLOWING.cpp
 #include "linefollower.h"
 #include "main.h"
 
 LineFollower::LineFollower(MotorController* motorController) : motors(motorController) {
-  if (!motors) {
-    // Serial.println("Error: MotorController pointer is null!");
-  }
+  // Set values to EXACTLY match working code
+  Kp = 45.0;
+  Ki = 0.0;
+  Kd = 0.0;
+  Ko = 2.0;
+  targetPosition = 220.0;  // 220 for search speed
+  currentPosition = 0.0;
+  baseSpeed = 190;  // 190, not 150
+  
+  // Set thresholds to EXACTLY match working code
+  sensorThresholds[R1] = 1.7;
+  sensorThresholds[L1] = 1.7;
+  sensorThresholds[R2] = 1.8;
+  sensorThresholds[L2] = 1.8;
 }
 
 LineFollower::~LineFollower() {
@@ -14,12 +25,10 @@ LineFollower::~LineFollower() {
 
 bool LineFollower::start() {
   if (running) {
-    // Serial.println("Line follower already running");
     return true;
   }
   
   if (!motors) {
-    // Serial.println("Error: No motor controller available");
     return false;
   }
   
@@ -39,10 +48,8 @@ bool LineFollower::start() {
   
   if (result == pdPASS) {
     running = true;
-    // Serial.println("Sensor-based line following started");
     return true;
   } else {
-    // Serial.println("Failed to create line following task");
     return false;
   }
 }
@@ -102,19 +109,13 @@ void LineFollower::lineFollowTaskWrapper(void* parameter) {
 
 void LineFollower::lineFollowLoop() {
   const int loopDelay = 10; // milliseconds
-  unsigned long lastTime = millis();
   bool leftTurn = true;
   
   for (;;) {
     // Update sensors
     updateSensors();
     
-    // Calculate delta time
-    unsigned long currentTime = millis();
-    float deltaTime = (currentTime - lastTime) / 1000.0;
-    lastTime = currentTime;
-    
-    // Determine turn direction based on outer sensors (same as working code)
+    // Determine turn direction based on outer sensors - EXACTLY like working code
     if (!offLine(R2)) {
       leftTurn = false;
     } else if (!offLine(L2)) {
@@ -123,30 +124,35 @@ void LineFollower::lineFollowLoop() {
     
     // Check if both inner sensors are off the line
     if (offLine(R1) && offLine(L1)) {
-      // OFF-LINE HANDLING - Fixed to match working code behavior
+      // OFF-LINE HANDLING - EXACTLY like working code
       if (leftTurn) {
-        // Turn left: left motor backward, right motor forward
-        motors->setMotors(-searchSpeed, searchSpeed);
+        // Left motor backward, right motor forward using targetPosition
+        motors->setMotors(-targetPosition, targetPosition);
       } else {
-        // Turn right: left motor forward, right motor backward  
-        motors->setMotors(searchSpeed, -searchSpeed);
+        // Left motor forward, right motor backward using targetPosition  
+        motors->setMotors(targetPosition, -targetPosition);
       }
     } else {
-      // Normal PID line following
-      float currentPosition = getCurrentPosition();
+      // Normal PID line following - EXACTLY like working code
+      currentPosition = sensorVoltages[L1] - sensorVoltages[R1];
       
-      // Fixed error calculation to match working code
-      // Working code uses: error = currentPosition (target implicitly 0)
-      // Our target is 0 by default, so: error = currentPosition - 0 = currentPosition
-      float error = currentPosition - targetPosition;
+      // CRITICAL: error = currentPosition (NOT currentPosition - targetPosition)
+      // Working code does: error = currentPosition;
+      float error = currentPosition;
       
-      float pidOutput = calculatePIDOutput(error, deltaTime);
+      // PID calculation - exactly like working code with Ko
+      integral += error * (loopDelay / 1000.0);
+      integral = constrain(integral, -100, 100);
+      float derivative = (error - previousError) / (loopDelay / 1000.0);
+      float output = (Kp * error + Ki * integral + Kd * derivative) * Ko;  // Multiply by Ko!
       
-      // Apply PID output to motors (same as working code)
-      int leftSpeed = baseSpeed + (int)pidOutput;
-      int rightSpeed = baseSpeed - (int)pidOutput;
+      // Apply PID output to motors - exactly like working code
+      int leftSpeed = baseSpeed + (int)output;
+      int rightSpeed = baseSpeed - (int)output;
       
       motors->setMotors(leftSpeed, rightSpeed);
+      
+      previousError = error;
     }
     
     vTaskDelay(pdMS_TO_TICKS(loopDelay));
@@ -154,32 +160,30 @@ void LineFollower::lineFollowLoop() {
 }
 
 float LineFollower::calculatePIDOutput(float error, float deltaTime) {
-  // Integral term with windup protection
+  // This method is not used in the fixed version - PID is calculated directly in lineFollowLoop
+  // Keeping for compatibility but adding Ko like working code
   integral += error * deltaTime;
   integral = constrain(integral, -100, 100);
   
-  // Derivative term
   float derivative = (error - previousError) / deltaTime;
+  float output = (Kp * error + Ki * integral + Kd * derivative) * Ko;  // Include Ko
   
-  // Calculate PID output
-  float output = Kp * error + Ki * integral + Kd * derivative;
-  
-  // Store for next iteration
   previousError = error;
-  
   return output;
 }
 
-// REMOVED: handleOffLine() method - now handled directly in main loop
-
 float LineFollower::getCurrentPosition() {
-  return sensorVoltages[L1] - sensorVoltages[R1];  // Same as working code
+  return currentPosition;  // Return the class member variable
 }
 
 void LineFollower::setPID(float kp, float ki, float kd) {
   Kp = kp;
   Ki = ki;
   Kd = kd;
+}
+
+void LineFollower::setKo(float ko) {
+  Ko = ko;
 }
 
 void LineFollower::setBaseSpeed(int base) {
@@ -216,7 +220,8 @@ void LineFollower::printStatus() {
   Serial.print("Search Speed: "); Serial.println(searchSpeed);
   Serial.print("PID - Kp: "); Serial.print(Kp);
   Serial.print(", Ki: "); Serial.print(Ki);
-  Serial.print(", Kd: "); Serial.println(Kd);
+  Serial.print(", Kd: "); Serial.print(Kd);
+  Serial.print(", Ko: "); Serial.println(Ko);  // ADD Ko to status
   Serial.print("Target Position: "); Serial.println(targetPosition);
   Serial.print("Current Position: "); Serial.println(getCurrentPosition());
   if (motors) {

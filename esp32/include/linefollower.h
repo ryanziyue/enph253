@@ -9,25 +9,26 @@ private:
   TaskHandle_t lineFollowTaskHandle = nullptr;
   bool running = false;
   
-  // PID variables
-  float Kp = 1.0, Ki = 0.0, Kd = 0.0;
-  float targetPosition = 0.0;
+  // PID variables - MATCH working code exactly
+  float Kp = 45.0, Ki = 0.0, Kd = 0.0;  // Kp = 45, not 1.0!
+  float Ko = 2.0;  // ADD Ko parameter like working code
+  float targetPosition = 220.0;  // 220, not 0!
+  float currentPosition = 0.0;
   float previousError = 0.0;
   float integral = 0.0;
   
-  // Speed settings
-  int baseSpeed = 150;
-  int searchSpeed = 120;  // Increased from 100 for better off-line recovery
+  // Speed settings - MATCH working code exactly
+  int baseSpeed = 190;  // 190, not 150!
+  int searchSpeed = 120;
   
-  // Sensor variables
+  // Sensor variables - MATCH working code thresholds
   float sensorVoltages[4] = {0.0, 0.0, 0.0, 0.0};
-  float sensorThresholds[4] = {0.3, 0.3, 0.3, 0.3};
+  float sensorThresholds[4] = {1.7, 1.7, 1.8, 1.8};  // NOT 0.3!
   
   // Control logic
   static void lineFollowTaskWrapper(void* parameter);
   void lineFollowLoop();
   float calculatePIDOutput(float error, float deltaTime);
-  // REMOVED: handleOffLine() - now handled in main loop
 
 public:
   // Sensor constants
@@ -43,6 +44,7 @@ public:
   
   // Configuration
   void setPID(float kp, float ki = 0.0, float kd = 0.0);
+  void setKo(float ko);  // ADD Ko setter method
   void setBaseSpeed(int base);
   void setSearchSpeed(int speed);
   void setTarget(float target);

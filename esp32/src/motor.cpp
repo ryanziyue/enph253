@@ -3,7 +3,7 @@
 
 MotorController::MotorController():
   initialized(false), current_left_speed(0), current_right_speed(0),
-  minSpeed(0), maxSpeed(255) {}
+  minSpeed(175), maxSpeed(255) {}  // Set minSpeed to 175 like working code
 
 void MotorController::init() {
   // PWM channel setup
@@ -34,40 +34,35 @@ void MotorController::stopMotor(uint8_t chanFwd, uint8_t chanRev) {
   ledcWrite(chanRev, 0);
 }
 
+// EXACTLY match working code's driveMotor logic including the "bug"
 void MotorController::driveMotor(uint8_t chanFwd, uint8_t chanRev, int speed) {
-  speed = constrain(speed, -255, 255);
+  // Constrain speed to -255 to 255 - exactly like working code
+  if (speed > 255) {
+    speed = 255;
+  } else if (speed < -255) {
+    speed = -255;
+  }
 
   if (speed > 0) {
     ledcWrite(chanRev, 0);
+    if (speed < minSpeed) {
+      speed = minSpeed;
+    }
     ledcWrite(chanFwd, speed);
-  }
-  else if (speed < 0) {
+  } else if (speed < 0) {
     ledcWrite(chanFwd, 0);
+    // CRITICAL: Keep the "bug" from working code that makes it work!
+    if (speed > -minSpeed) {
+      speed = minSpeed;  // This is the "bug" - should be -minSpeed but working code has minSpeed!
+    }
     ledcWrite(chanRev, -speed);
-  }
-  else {
+  } else {
     stopMotor(chanFwd, chanRev);
   }
 }
 
 void MotorController::setMotors(int left_speed, int right_speed) {
-  // Apply speed constraints
-  if (left_speed != 0) {  // Don't constrain zero (stop command)
-    if (left_speed > 0) {
-      left_speed = constrain(left_speed, minSpeed, maxSpeed);
-    } else {
-      left_speed = constrain(left_speed, -maxSpeed, -minSpeed);
-    }
-  }
-  
-  if (right_speed != 0) {  // Don't constrain zero (stop command)
-    if (right_speed > 0) {
-      right_speed = constrain(right_speed, minSpeed, maxSpeed);
-    } else {
-      right_speed = constrain(right_speed, -maxSpeed, -minSpeed);
-    }
-  }
-  
+  // Don't apply any additional constraints - let driveMotor handle it exactly like working code
   current_left_speed = left_speed;
   current_right_speed = right_speed;
   driveMotor(M1_CHAN_FWD, M1_CHAN_REV, left_speed);
