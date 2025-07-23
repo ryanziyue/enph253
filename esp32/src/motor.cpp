@@ -18,7 +18,6 @@ void MotorController::init() {
   ledcAttachPin(M2_PIN_REV, 3);
   
   initialized = true;
-  Serial.println("Motor controller initialized");
 }
 
 void MotorController::updateSensors() {
@@ -36,7 +35,7 @@ void MotorController::updateSensors() {
 
 bool MotorController::offLine(int sensor) {
   if (sensor < 0 || sensor > 3) return false;
-  return (sensorVoltages[sensor] < sensorThresholds[sensor]);
+  return (sensorVoltages[sensor] > sensorThresholds[sensor]);
 }
 
 void MotorController::stopMotor(uint8_t chanFwd, uint8_t chanRev) {
