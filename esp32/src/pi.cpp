@@ -17,6 +17,9 @@ PiResponse PiComm::processCommand(const String& cmd) {
   else if (cmd.startsWith("PI:TP,")) {
     return handleTargetPositionCommand(cmd);
   }
+  else if (cmd.startsWith("PI:ST,")) {
+    return handleSensorThresholdCommand(cmd);
+  }
   else if (cmd.startsWith("PI:MC,")) {
     return handleMotorCommand(cmd);
   }
