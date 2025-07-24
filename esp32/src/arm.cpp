@@ -267,6 +267,13 @@ void ServoController::setClaw(float angle) {
   Serial.print("Claw: "); Serial.println(angle);
 }
 
+void ServoController::setMaxSpeed(int idx, float maxSpeed) {
+  if (!initialized) return;
+  if (idx >= 0 && idx < NUM_SERVOS) {
+    max_speed[idx] = maxSpeed;
+  }
+}
+
 void ServoController::applyWristLock() {
   // Check if temporarily disabled
   if (millis() < wrist_lock_disable_until) {
