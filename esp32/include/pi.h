@@ -24,23 +24,25 @@ private:
   LineFollower* lineFollower;
   
   // command parsing helpers - PID CONTROL
-  PiResponse handlePIDSetting(const String& cmd);            // PI:PID,kp,ki,kd
+  PiResponse handlePIDSettingCommand(const String& cmd);            // PI:PID,kp,ki,kd
+  PiResponse handleTargetPositionCommand(const String& cmd);        // PI:TP,x
+  PiResponse handleSensorThresholdCommand(const String& cmd);       // PI:ST,a,b,c,d
 
   // command parsing helpers - MOTOR CONTROL
-  PiResponse handleMotorCommand(const String& cmd);          // PI:MC,x,y
-  PiResponse handleLineFollowToggle(const String& cmd);      // PI:LF,x
-  PiResponse handleBaseSpeed(const String& cmd);             // PI:LBS,x
-  PiResponse handleMinSpeed(const String& cmd);              // PI:LMS,x
+  PiResponse handleMotorCommand(const String& cmd);                 // PI:MC,x,y
+  PiResponse handleLineFollowToggle(const String& cmd);             // PI:LF,x
+  PiResponse handleBaseSpeed(const String& cmd);                    // PI:LBS,x
+  PiResponse handleMinSpeed(const String& cmd);                     // PI:LMS,x
   
   // command parsing helpers - ARM CONTROL
-  PiResponse handleServoPositionCommand(const String& cmd);  // PI:SP,a,b,c
-  PiResponse handleWristPositionCommand(const String& cmd);  // PI:WP,a
-  PiResponse handleClawPositionCommand(const String& cmd);   // PI:CP,a
-  PiResponse handleGlobalPositionCommand(const String& cmd); // PI:GP,x,y
-  PiResponse handleGlobalVelocityCommand(const String& cmd); // PI:GV,x,y
-  PiResponse handleWristLockToggle(const String& cmd);       // PI:WLT,1/0
-  PiResponse handleWristLockAngle(const String& cmd);        // PI:WLA,angle
-  PiResponse handleWristLockTempDisable(const String& cmd);  // PI:WLTD,duration_ms
+  PiResponse handleServoPositionCommand(const String& cmd);         // PI:SP,a,b,c
+  PiResponse handleWristPositionCommand(const String& cmd);         // PI:WP,a
+  PiResponse handleClawPositionCommand(const String& cmd);          // PI:CP,a
+  PiResponse handleGlobalPositionCommand(const String& cmd);        // PI:GP,x,y
+  PiResponse handleGlobalVelocityCommand(const String& cmd);        // PI:GV,x,y
+  PiResponse handleWristLockToggle(const String& cmd);              // PI:WLT,1/0
+  PiResponse handleWristLockAngle(const String& cmd);               // PI:WLA,angle
+  PiResponse handleWristLockTempDisable(const String& cmd);         // PI:WLTD,duration_ms
   
   // status and utility
   PiResponse handleStatusRequest(const String& cmd);
