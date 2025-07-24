@@ -6,11 +6,11 @@ ServoController::ServoController() : last_millis(0), last_ik_millis(0),
     wrist_lock_enabled(true), wrist_lock_angle(0), wrist_lock_disable_until(0), initialized(false) {
   
   // set max speeds
-  max_speed[IDX_BASE] = 45.0;
-  max_speed[IDX_SHOULDER_L] = 30.0;
-  max_speed[IDX_SHOULDER_R] = 30.0;
-  max_speed[IDX_ELBOW] = 60.0;
-  max_speed[IDX_WRIST] = 60.0;
+  max_speed[IDX_BASE] = IDX_BASE_SPEED;
+  max_speed[IDX_SHOULDER_L] = IDX_SHOULDER_SPEED;
+  max_speed[IDX_SHOULDER_R] = IDX_SHOULDER_SPEED;
+  max_speed[IDX_ELBOW] = IDX_ELBOW_SPEED;
+  max_speed[IDX_WRIST] = IDX_WRIST_SPEED; 
   
   // set home positions
   for (int i = 0; i < NUM_SERVOS; i++) {
@@ -296,7 +296,7 @@ Point ServoController::forwardKinematics(float theta1, float theta2) {
   Point W;
   W.x = ARM_L1 * cos(t1) + ARM_L2 * cos(t1 + phi);
   W.y = ARM_L1 * sin(t1) + ARM_L2 * sin(t1 + phi);
-  
+
   return W;
 }
 
