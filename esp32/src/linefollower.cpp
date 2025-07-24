@@ -191,7 +191,7 @@ void LineFollower::setSearchSpeed(int speed) {
   searchSpeed = constrain(speed, 0, 255);
 }
 
-void LineFollower::setTarget(float target) {
+void LineFollower::setTargetPosition(float target) {
   targetPosition = target;
 }
 
