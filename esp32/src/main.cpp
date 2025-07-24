@@ -36,7 +36,7 @@ void setup() {
   motors.setMaxSpeed(MOTOR_MAX_SPEED);  
   
   sensorLineFollower.setBaseSpeed(BASE_SPEED);
-  sensorLineFollower.setTarget(TARGET_POSITION);
+  sensorLineFollower.setTargetPosition(TARGET_POSITION);
   sensorLineFollower.setPID(K_P, K_I, K_D);
   sensorLineFollower.setKo(K_O);
   
