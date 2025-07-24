@@ -48,8 +48,8 @@ public:
   PiResponse processCommand(const String& cmd);
   
   // utility functions
-  void sendResponse(const PiResponse& response);
-  void sendPositionUpdate();
-  void sendLimitSwitchPressed();  // ESP:LS
+  void sendResponse(const PiResponse& response);            // ESP:OK/ERROR:msg
+  void sendPositionUpdate();                                // ESP:x,y
+  void sendLimitSwitchPressed();                            // ESP:LS
   bool isValidCommand(const String& cmd);
 };
