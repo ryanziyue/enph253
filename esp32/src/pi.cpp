@@ -11,11 +11,11 @@ PiResponse PiComm::processCommand(const String& cmd) {
     return PiResponse(false, "Invalid command format");
   }
   
-  if (cmd.startsWith("PI:MC,")) {
-    return handleMotorCommand(cmd);
+  if (cmd.startsWith("PI:PID,")) {
+    return handlePIDSettingCommand(cmd);
   }
-  else if (cmd.startsWith("PI:PID,")) {
-    return handlePIDSetting(cmd);
+  else if (cmd.startsWith("PI:MC,")) {
+    return handleMotorCommand(cmd);
   }
   else if (cmd.startsWith("PI:LF,")) {
     return handleLineFollowToggle(cmd);
@@ -56,6 +56,18 @@ PiResponse PiComm::processCommand(const String& cmd) {
   else {
     return PiResponse(false, "Unknown command: " + cmd);
   }
+}
+
+// ------- LINEFOLLOWING COMMANDS -------
+PiResponse PiComm::handlePIDSettingCommand(const String& cmd) {
+  float kp, ki, kd;
+  if (sscanf(cmd.c_str(), "PI:PID,%d,%d,%d", &kp, &ki, &kd) != 3) {
+    return PiResponse(false, "Invalid PID command format. Use PI:PID,kp,ki,kd");
+  }
+
+  lineFollower->setPID(kp, ki, kd);
+
+  return PiResponse(true, "PID values set to Kp = " + String(kp) + " , Ki = " + String(ki) + ", Kd = " + String(kd));
 }
 
 // ------- MOTOR CONTROL COMMANDS ------- 
