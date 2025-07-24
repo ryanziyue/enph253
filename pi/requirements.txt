@@ -1,0 +1,20 @@
+# Core Computer Vision and Machine Learning
+opencv-python>=4.5.0
+numpy>=1.20.0
+ultralytics>=8.0.0
+
+# Serial Communication
+pyserial>=3.5
+
+# GUI and Image Processing (optional, for legacy GUI components)
+Pillow>=8.0.0
+# tkinter is usually included with Python, but might need manual install on some systems
+
+# System Monitoring (for debugging)
+psutil>=5.8.0
+
+# Data Processing and Configuration
+matplotlib>=3.3.0  # For plotting in curvature detection tests
+
+# Development and Testing (optional)
+pytest>=6.0.0  # If you add unit tests

@@ -1,0 +1,51 @@
+{
+  "camera_1": {
+    "device_id": 1,
+    "resolution": [640, 480],
+    "target_fps": 30,
+    "buffer_size": 1,
+    "fourcc": "MJPG",
+    "brightness": 0,
+    "contrast": 0,
+    "saturation": 0,
+    "auto_exposure": true,
+    "exposure_time": -1,
+    "auto_white_balance": true,
+    "white_balance_temp": 4000,
+    "gain": 0,
+    "enabled": true,
+    "downsample_factor": 1.0,
+    "homography": {
+      "enabled": true,
+      "correction_angle": 45.0
+    }
+  },
+  "camera_2": {
+    "device_id": 0,
+    "resolution": [640, 480],
+    "target_fps": 30,
+    "buffer_size": 1,
+    "fourcc": "MJPG",
+    "brightness": 0,
+    "contrast": 0,
+    "saturation": 0,
+    "auto_exposure": true,
+    "exposure_time": -1,
+    "auto_white_balance": true,
+    "white_balance_temp": 4000,
+    "gain": 0,
+    "enabled": true,
+    "downsample_factor": 1.0,
+    "homography": {
+      "enabled": false,
+      "correction_angle": 30.0
+    }
+  },
+  "system": {
+    "retry_attempts": 3,
+    "retry_delay": 1.0,
+    "warmup_frames": 5,
+    "frame_timeout": 1.0,
+    "enable_threading": true
+  }
+}

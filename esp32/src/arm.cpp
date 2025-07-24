@@ -47,7 +47,7 @@ void ServoController::init() {
     Serial.println("Failed to attach claw servo");
     return;
   }
-  claw.write(0);
+  claw.write(90);
   
   last_millis = millis();
   last_ik_millis = millis();
@@ -280,7 +280,7 @@ void ServoController::applyWristLock() {
   
   // formula: 50.0 - angle_1 + angle_2 gives horizontal orientation (0°)
   // adding wrist_lock_angle tilts the wrist by that amount from horizontal
-  float lockAng = 50.0 - angle_1 + angle_2 + wrist_lock_angle;
+  float lockAng = 90.0 - angle_1 + angle_2 + wrist_lock_angle;
   lockAng = constrain(lockAng, 0.0, 180.0);
   
   servos[IDX_WRIST].write(lockAng);

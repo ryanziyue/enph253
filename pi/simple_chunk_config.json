@@ -1,0 +1,30 @@
+{
+  "detection": {
+    "max_brightness": 40,
+    "min_line_width_percent": 2.0,
+    "search_width_percent": 80.0,
+    "adaptive_center": false,
+    "brown_filtering": true,
+    "brown_threshold_percent": 50.0,
+    "brown_rect_height_percent": 2.0
+  },
+  "sampling": {
+    "num_rows": 10,
+    "row_spacing_percent": 8.0,
+    "start_from_bottom_percent": 0.0
+  },
+  "visualization": {
+    "show_search_region": true,
+    "show_all_detections": true,
+    "show_center_line": true,
+    "show_barrier_area": true
+  },
+  "barrier_detection": {
+    "enabled": true,
+    "area_width_percent": 40.0,
+    "area_height_percent": 20.0,
+    "center_x_percent": 50.0,
+    "bottom_offset_percent": 5.0,
+    "brown_threshold_percent": 60.0
+  }
+}
