@@ -46,7 +46,7 @@ public:
   void setKo(float ko);  // ADD Ko setter method
   void setBaseSpeed(int base);
   void setSearchSpeed(int speed);
-  void setTarget(float target);
+  void setTargetPosition(float target);
   void resetPID();
   
   // Sensor methods
