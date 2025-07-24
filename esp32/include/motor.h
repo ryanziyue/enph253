@@ -7,9 +7,8 @@ private:
   int current_left_speed;
   int current_right_speed;
   
-  // Speed constraints - moved from LineFollower
-  int minSpeed = 0;    // Minimum speed (motors won't run below this)
-  int maxSpeed = 255;  // Maximum speed limit
+  int minSpeed;
+  int maxSpeed; 
 
 public:
   MotorController();
