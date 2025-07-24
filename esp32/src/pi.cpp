@@ -56,7 +56,7 @@ PiResponse PiComm::processCommand(const String& cmd) {
   else if (cmd.startsWith("PI:WLTD,")) {
     return handleWristLockTempDisable(cmd);
   }
-    else if (cmd.startsWith("PI:SS,")) {
+  else if (cmd.startsWith("PI:SS,")) {
     return handleAllServoSpeedsCommand(cmd);
   }
   else if (cmd.startsWith("PI:SMS,")) {
@@ -322,19 +322,46 @@ PiResponse PiComm::handleWristLockTempDisable(const String& cmd) {
 
 PiResponse PiComm::handleAllServoSpeedsCommand(const String& cmd) {
   // parse: PI:SS,base,shoulder,elbow,wrist
-  float baseSpeed, shoulderSpeed, elbowSpeed, wristSpeed;
-  if (sscanf(cmd.c_str(), "PI:SS,%f,%f,%f,%f", &baseSpeed, &shoulderSpeed, &elbowSpeed, &wristSpeed) != 4) {
-    return PiResponse(false, "Invalid all servo speeds format. Use PI:SS,base,shoulder,elbow,wrist");
+  String parts[4];
+  int idx = 0, start = 6;
+
+  // parse comma-separated values
+  for (int i = 6; i <= cmd.length() && idx < 4; i++) {
+    if (i == cmd.length() || cmd.charAt(i) == ',') {
+      parts[idx++] = cmd.substring(start, i);
+      start = i + 1;
+    }
   }
   
-  // set individual servo speeds
-  servos->setSpeed(IDX_BASE, baseSpeed);
-  servos->setSpeed(IDX_SHOULDER_L, shoulderSpeed);
-  servos->setSpeed(IDX_SHOULDER_R, shoulderSpeed);
-  servos->setSpeed(IDX_ELBOW, elbowSpeed);
-  servos->setSpeed(IDX_WRIST, wristSpeed);
+  if (idx < 4) {
+    return PiResponse(false, "Invalid servo max speeds format. Use PI:SS,base,shoulder,elbow,wrist");
+  }
+
+  // execute commands (skip if "-")
+  if (parts[0] != "-") {
+    parts[0].trim();
+    float baseSpeed = parts[0].toFloat();
+    servos->setSpeed(IDX_BASE, baseSpeed);
+  }
+  if (parts[1] != "-") {
+    parts[1].trim();
+    float shoulderSpeed = parts[1].toFloat();
+    servos->setSpeed(IDX_SHOULDER_L, shoulderSpeed);
+    servos->setSpeed(IDX_SHOULDER_R, shoulderSpeed);
+  }
+  if (parts[2] != "-") {
+    parts[2].trim();
+    float elbowSpeed = parts[2].toFloat();
+    servos->setSpeed(IDX_ELBOW, elbowSpeed);
+  }
+  if (parts[3] != "-") {
+    parts[3].trim();
+    float wristSpeed = parts[3].toFloat();
+    servos->setSpeed(IDX_WRIST, wristSpeed);
+  }
   
-  return PiResponse(true, "All servo speeds set - Base:" + String(baseSpeed) + " Shoulder:" + String(shoulderSpeed) + " Elbow:" + String(elbowSpeed) + " Wrist:" + String(wristSpeed));
+  return PiResponse(true, "Servo speeds set: base=" + parts[0] + 
+                         " shoulder=" + parts[1] + " elbow=" + parts[2] + " wrist=" + parts[3]);
 }
 
 PiResponse PiComm::handleAllServoMaxSpeedsCommand(const String& cmd) {
