@@ -3,7 +3,7 @@
 
 MotorController::MotorController():
   initialized(false), current_left_speed(0), current_right_speed(0),
-  minSpeed(175), maxSpeed(255) {}  // Set minSpeed to 175 like working code
+  minSpeed(MOTOR_MIN_SPEED), maxSpeed(MOTOR_MAX_SPEED) {} 
 
 void MotorController::init() {
   // PWM channel setup

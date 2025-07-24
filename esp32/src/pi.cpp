@@ -14,6 +14,9 @@ PiResponse PiComm::processCommand(const String& cmd) {
   if (cmd.startsWith("PI:MC,")) {
     return handleMotorCommand(cmd);
   }
+  else if (cmd.startsWith("PI:PID,")) {
+    return handlePIDSetting(cmd);
+  }
   else if (cmd.startsWith("PI:LF,")) {
     return handleLineFollowToggle(cmd);
   }

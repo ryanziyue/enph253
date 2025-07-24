@@ -23,6 +23,9 @@ private:
   ServoController* servos;
   LineFollower* lineFollower;
   
+  // command parsing helpers - PID CONTROL
+  PiResponse handlePIDSetting(const String& cmd);            // PI:PID,kp,ki,kd
+
   // command parsing helpers - MOTOR CONTROL
   PiResponse handleMotorCommand(const String& cmd);          // PI:MC,x,y
   PiResponse handleLineFollowToggle(const String& cmd);      // PI:LF,x

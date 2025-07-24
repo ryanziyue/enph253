@@ -42,7 +42,7 @@ public:
   bool isRunning() const { return running; }
   
   // Configuration
-  void setPID(float kp, float ki = 0.0, float kd = 0.0);
+  void setPID(float kp, float ki, float kd);
   void setKo(float ko);  // ADD Ko setter method
   void setBaseSpeed(int base);
   void setSearchSpeed(int speed);
