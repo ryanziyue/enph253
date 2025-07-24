@@ -26,7 +26,7 @@ private:
   // command parsing helpers - PID CONTROL
   PiResponse handlePIDSettingCommand(const String& cmd);            // PI:PID,kp,ki,kd
   PiResponse handleTargetPositionCommand(const String& cmd);        // PI:TP,x
-  PiResponse handleSensorThresholdCommand(const String& cmd);       // PI:ST,a,b,c,d
+  PiResponse handleSensorThresholdCommand(const String& cmd);       // PI:ST,r1,l1,r2,l2
 
   // command parsing helpers - MOTOR CONTROL
   PiResponse handleMotorCommand(const String& cmd);                 // PI:MC,x,y
