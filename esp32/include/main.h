@@ -46,8 +46,13 @@
 #define SENSOR_THRESHOLD_R2     1.8
 #define SENSOR_THRESHOLD_L2     1.8
 
+// speed parameters
 #define MOTOR_MIN_SPEED         175
 #define MOTOR_MAX_SPEED         255
+#define IDX_BASE_SPEED          45.0
+#define IDX_SHOULDER_SPEED      30.0
+#define IDX_ELBOW_SPEED         60.0
+#define IDX_WRIST_SPEED         60.0
 
 // forward declarations
 class MotorController;
