@@ -14,6 +14,9 @@ PiResponse PiComm::processCommand(const String& cmd) {
   if (cmd.startsWith("PI:PID,")) {
     return handlePIDSettingCommand(cmd);
   }
+  else if (cmd.startsWith("PI:TP,")) {
+    return handleTargetPositionCommand(cmd);
+  }
   else if (cmd.startsWith("PI:MC,")) {
     return handleMotorCommand(cmd);
   }
@@ -61,13 +64,24 @@ PiResponse PiComm::processCommand(const String& cmd) {
 // ------- LINEFOLLOWING COMMANDS -------
 PiResponse PiComm::handlePIDSettingCommand(const String& cmd) {
   float kp, ki, kd;
-  if (sscanf(cmd.c_str(), "PI:PID,%d,%d,%d", &kp, &ki, &kd) != 3) {
+  if (sscanf(cmd.c_str(), "PI:PID,%f,%f,%f", &kp, &ki, &kd) != 3) {
     return PiResponse(false, "Invalid PID command format. Use PI:PID,kp,ki,kd");
   }
 
   lineFollower->setPID(kp, ki, kd);
 
   return PiResponse(true, "PID values set to Kp = " + String(kp) + " , Ki = " + String(ki) + ", Kd = " + String(kd));
+}
+
+PiResponse PiComm::handleTargetPositionCommand(const String& cmd) {
+  float tp;
+  if (sscanf(cmd.c_str(), "PI:TP,%f", &tp) != 1) {
+    return PiResponse(false, "Invalid target position command format. Use PI:TP,x");
+  }
+
+  lineFollower->setTargetPosition(tp);
+
+  return PiResponse(true, "Target position set to " + String(tp));
 }
 
 // ------- MOTOR CONTROL COMMANDS ------- 
