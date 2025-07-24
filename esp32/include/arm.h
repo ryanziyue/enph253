@@ -56,6 +56,7 @@ private:
   void setShoulderTarget(float angle);
   void setShoulderSpeed(float speed);
 
+
 public:
   ServoController();
   void init();
@@ -76,6 +77,7 @@ public:
   float getWristLockAngle() const { return wrist_lock_angle; }  // Get current lock angle
   void temporarilyDisableWristLock(int duration_ms = 5000);  // Temporarily disable for manual control
   void setClaw(float angle);
+  void setMaxSpeed(int idx, float maxSpeed);
   
   // kinematics
   Point forwardKinematics(float theta1, float theta2);
