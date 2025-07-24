@@ -1,4 +1,3 @@
-// linefollower.h - Fixed version
 #pragma once
 #include <Arduino.h>
 #include "motor.h"
@@ -9,21 +8,21 @@ private:
   TaskHandle_t lineFollowTaskHandle = nullptr;
   bool running = false;
   
-  // PID variables - MATCH working code exactly
-  float Kp = 45.0, Ki = 0.0, Kd = 0.0;  // Kp = 45, not 1.0!
-  float Ko = 2.0;  // ADD Ko parameter like working code
-  float targetPosition = 220.0;  // 220, not 0!
-  float currentPosition = 0.0;
-  float previousError = 0.0;
-  float integral = 0.0;
+  // PID variables
+  float Kp, Ki, Kd;
+  float Ko; 
+  float targetPosition;
+  float currentPosition;
+  float previousError;
+  float integral;
   
-  // Speed settings - MATCH working code exactly
-  int baseSpeed = 190;  // 190, not 150!
-  int searchSpeed = 120;
+  // speed settings
+  int baseSpeed;
+  int searchSpeed;
   
-  // Sensor variables - MATCH working code thresholds
-  float sensorVoltages[4] = {0.0, 0.0, 0.0, 0.0};
-  float sensorThresholds[4] = {1.7, 1.7, 1.8, 1.8};  // NOT 0.3!
+  // sensor variables
+  float sensorVoltages[4];
+  float sensorThresholds[4];
   
   // Control logic
   static void lineFollowTaskWrapper(void* parameter);
