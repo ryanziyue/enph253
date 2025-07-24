@@ -84,6 +84,21 @@ PiResponse PiComm::handleTargetPositionCommand(const String& cmd) {
   return PiResponse(true, "Target position set to " + String(tp));
 }
 
+PiResponse PiComm::handleSensorThresholdCommand(const String& cmd) {
+  float r1, l1, r2, l2;
+  if (sscanf(cmd.c_str(), "PI:ST,%f,%f,%f,%f", &r1, &l1, &r2, &l2) != 4) {
+    return PiResponse(false, "Invalid sensor threshold command. Use PI:ST,r1,l1,r2,l2");
+  }
+
+  float thresholds[4] = {r1, l1, r2, l2};
+
+  for (int i = 0; i < 4; i++) {
+    lineFollower->setSensorThreshold(i, thresholds[i]);
+  }
+
+  return PiResponse(true, "Sensor thresholds set to r1 = " + String(r1) + " , l1 = " + String(l1) + ", r2 = " + String(r2) + ", l2 = " + String(l2));
+}
+
 // ------- MOTOR CONTROL COMMANDS ------- 
 
 PiResponse PiComm::handleMotorCommand(const String& cmd) {
