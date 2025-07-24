@@ -56,6 +56,12 @@ PiResponse PiComm::processCommand(const String& cmd) {
   else if (cmd.startsWith("PI:WLTD,")) {
     return handleWristLockTempDisable(cmd);
   }
+    else if (cmd.startsWith("PI:SS,")) {
+    return handleAllServoSpeedsCommand(cmd);
+  }
+  else if (cmd.startsWith("PI:SMS,")) {
+    return handleAllServoMaxSpeedsCommand(cmd);
+  }
   else if (cmd.equals("PI:STATUS")) {
     return handleStatusRequest(cmd);
   }
@@ -312,6 +318,67 @@ PiResponse PiComm::handleWristLockTempDisable(const String& cmd) {
   servos->temporarilyDisableWristLock(duration);
   
   return PiResponse(true, "Wrist lock temporarily disabled for " + String(duration) + "ms");
+}
+
+PiResponse PiComm::handleAllServoSpeedsCommand(const String& cmd) {
+  // parse: PI:SS,base,shoulder,elbow,wrist
+  float baseSpeed, shoulderSpeed, elbowSpeed, wristSpeed;
+  if (sscanf(cmd.c_str(), "PI:SS,%f,%f,%f,%f", &baseSpeed, &shoulderSpeed, &elbowSpeed, &wristSpeed) != 4) {
+    return PiResponse(false, "Invalid all servo speeds format. Use PI:SS,base,shoulder,elbow,wrist");
+  }
+  
+  // set individual servo speeds
+  servos->setSpeed(IDX_BASE, baseSpeed);
+  servos->setSpeed(IDX_SHOULDER_L, shoulderSpeed);
+  servos->setSpeed(IDX_SHOULDER_R, shoulderSpeed);
+  servos->setSpeed(IDX_ELBOW, elbowSpeed);
+  servos->setSpeed(IDX_WRIST, wristSpeed);
+  
+  return PiResponse(true, "All servo speeds set - Base:" + String(baseSpeed) + " Shoulder:" + String(shoulderSpeed) + " Elbow:" + String(elbowSpeed) + " Wrist:" + String(wristSpeed));
+}
+
+PiResponse PiComm::handleAllServoMaxSpeedsCommand(const String& cmd) {
+  // parse: PI:SMS,base,shoulder,elbow,wrist
+  String parts[4];
+  int idx = 0, start = 7; // after "PI:SMS,"
+  
+  // parse comma-separated values
+  for (int i = 7; i <= cmd.length() && idx < 4; i++) {
+    if (i == cmd.length() || cmd.charAt(i) == ',') {
+      parts[idx++] = cmd.substring(start, i);
+      start = i + 1;
+    }
+  }
+  
+  if (idx < 4) {
+    return PiResponse(false, "Invalid servo max speeds format. Use PI:SMS,base,shoulder,elbow,wrist");
+  }
+  
+  // execute commands (skip if "-")
+  if (parts[0] != "-") {
+    parts[0].trim();
+    float baseMaxSpeed = parts[0].toFloat();
+    servos->setMaxSpeed(IDX_BASE, baseMaxSpeed);
+  }
+  if (parts[1] != "-") {
+    parts[1].trim();
+    float shoulderMaxSpeed = parts[1].toFloat();
+    servos->setMaxSpeed(IDX_SHOULDER_L, shoulderMaxSpeed);
+    servos->setMaxSpeed(IDX_SHOULDER_R, shoulderMaxSpeed);
+  }
+  if (parts[2] != "-") {
+    parts[2].trim();
+    float elbowMaxSpeed = parts[2].toFloat();
+    servos->setMaxSpeed(IDX_ELBOW, elbowMaxSpeed);
+  }
+  if (parts[3] != "-") {
+    parts[3].trim();
+    float wristMaxSpeed = parts[3].toFloat();
+    servos->setMaxSpeed(IDX_WRIST, wristMaxSpeed);
+  }
+  
+  return PiResponse(true, "Servo max speeds set: base=" + parts[0] + 
+                         " shoulder=" + parts[1] + " elbow=" + parts[2] + " wrist=" + parts[3]);
 }
 
 // ------- STATUS AND UTILITY COMMANDS ------- 
