@@ -1,22 +1,19 @@
-// linefollower.cpp - Fixed to match working LINE_FOLLOWING.cpp
 #include "linefollower.h"
 #include "main.h"
 
 LineFollower::LineFollower(MotorController* motorController) : motors(motorController) {
-  // Set values to EXACTLY match working code
-  Kp = 45.0;
-  Ki = 0.0;
-  Kd = 0.0;
-  Ko = 2.0;
-  targetPosition = 220.0;  // 220 for search speed
-  currentPosition = 0.0;
-  baseSpeed = 190;  // 190, not 150
+  Kp = K_P;
+  Ki = K_I;
+  Kd = K_D;
+  Ko = K_O;
+  targetPosition = TARGET_POSITION; 
+  currentPosition = CURRENT_POSITION;
+  baseSpeed = BASE_SPEED; 
   
-  // Set thresholds to EXACTLY match working code
-  sensorThresholds[R1] = 1.7;
-  sensorThresholds[L1] = 1.7;
-  sensorThresholds[R2] = 1.8;
-  sensorThresholds[L2] = 1.8;
+  sensorThresholds[R1] = SENSOR_THRESHOLD_R1;
+  sensorThresholds[L1] = SENSOR_THRESHOLD_L1;
+  sensorThresholds[R2] = SENSOR_THRESHOLD_R2;
+  sensorThresholds[L2] = SENSOR_THRESHOLD_L2;
 }
 
 LineFollower::~LineFollower() {
@@ -41,9 +38,9 @@ bool LineFollower::start() {
     "LineFollowTask",
     4096,
     this,
-    2,  // Higher priority for real-time control
+    2,  // higher priority for real-time control
     &lineFollowTaskHandle,
-    1   // Core 1
+    1   // core 1
   );
   
   if (result == pdPASS) {
@@ -57,7 +54,7 @@ bool LineFollower::start() {
 void LineFollower::stop() {
   if (!running) return;
   
-  // Delete the task
+  // delete the task
   if (lineFollowTaskHandle != nullptr) {
     vTaskDelete(lineFollowTaskHandle);
     lineFollowTaskHandle = nullptr;
@@ -65,7 +62,7 @@ void LineFollower::stop() {
   
   running = false;
   
-  // Stop motors
+  // stop motors
   if (motors) {
     motors->stop();
   }
