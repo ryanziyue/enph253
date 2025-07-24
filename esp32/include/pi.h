@@ -26,7 +26,8 @@ private:
   // command parsing helpers - MOTOR CONTROL
   PiResponse handleMotorCommand(const String& cmd);          // PI:MC,x,y
   PiResponse handleLineFollowToggle(const String& cmd);      // PI:LF,x
-  PiResponse handleLineFollowSpeed(const String& cmd);       // PI:LFS,x
+  PiResponse handleBaseSpeed(const String& cmd);             // PI:LBS,x
+  PiResponse handleMinSpeed(const String& cmd);              // PI:LMS,x
   
   // command parsing helpers - ARM CONTROL
   PiResponse handleServoPositionCommand(const String& cmd);  // PI:SP,a,b,c
