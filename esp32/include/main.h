@@ -33,6 +33,22 @@
 #define PWM_FREQ           1000
 #define PWM_RES_BITS       8
 
+// line following params
+#define K_P                     45.0
+#define K_I                     0.0
+#define K_D                     0.0
+#define K_O                     2.0
+#define TARGET_POSITION         220.0
+#define CURRENT_POSITION        0.0
+#define BASE_SPEED              190
+#define SENSOR_THRESHOLD_R1     1.7
+#define SENSOR_THRESHOLD_L1     1.7
+#define SENSOR_THRESHOLD_R2     1.8
+#define SENSOR_THRESHOLD_L2     1.8
+
+#define MOTOR_MIN_SPEED         175
+#define MOTOR_MAX_SPEED         255
+
 // forward declarations
 class MotorController;
 class ServoController;

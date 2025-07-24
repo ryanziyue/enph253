@@ -32,35 +32,24 @@ void setup() {
   motors.init();
   arm.init();
   
-  // MATCH working code settings EXACTLY
-  motors.setMinSpeed(175);  // 175, not 108!
-  motors.setMaxSpeed(255);  
+  motors.setMinSpeed(MOTOR_MIN_SPEED);
+  motors.setMaxSpeed(MOTOR_MAX_SPEED);  
   
-  // Set base speed to 190 like working code
-  sensorLineFollower.setBaseSpeed(190);
+  sensorLineFollower.setBaseSpeed(BASE_SPEED);
+  sensorLineFollower.setTarget(TARGET_POSITION);
+  sensorLineFollower.setPID(K_P, K_I, K_D);
+  sensorLineFollower.setKo(K_O);
   
-  // Set target to 220 like working code uses for search speed
-  sensorLineFollower.setTarget(220.0);
-  
-  // Set PID values to match working code exactly
-  sensorLineFollower.setPID(45.0, 0.0, 0.0);  // Kp = 45!
-  sensorLineFollower.setKo(2.0);  // Ko = 2
-  
-  // configure sensor thresholds - EXACT values from working code
-  sensorLineFollower.setSensorThreshold(LineFollower::R1, 1.7);
-  sensorLineFollower.setSensorThreshold(LineFollower::L1, 1.7);
-  sensorLineFollower.setSensorThreshold(LineFollower::R2, 1.8);
-  sensorLineFollower.setSensorThreshold(LineFollower::L2, 1.8);
+  // configure sensor thresholds
+  sensorLineFollower.setSensorThreshold(LineFollower::R1, SENSOR_THRESHOLD_R1);
+  sensorLineFollower.setSensorThreshold(LineFollower::L1, SENSOR_THRESHOLD_L1);
+  sensorLineFollower.setSensorThreshold(LineFollower::R2, SENSOR_THRESHOLD_R2);
+  sensorLineFollower.setSensorThreshold(LineFollower::L2, SENSOR_THRESHOLD_L2);
   
   delay(1000);
   arm.resetPosition();
   
   systemInitialized = true;
-  
-  Serial.println("System ready! Listening for commands");
-  Serial.println("Line follower configured with EXACT working values:");
-  Serial.println("Kp: 45, Kd: 0, Ko: 2, Target: 220, Base: 190, Min: 175");
-  Serial.println("Thresholds: 1.7, 1.7, 1.8, 1.8");
 }
 
 void loop() {
