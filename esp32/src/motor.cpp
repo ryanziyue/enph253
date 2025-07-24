@@ -2,7 +2,8 @@
 #include "main.h"
 
 MotorController::MotorController():
-  initialized(false), current_left_speed(0), current_right_speed(0) {}
+  initialized(false), current_left_speed(0), current_right_speed(0),
+  minSpeed(175), maxSpeed(255) {}  // Set minSpeed to 175 like working code
 
 void MotorController::init() {
   // PWM channel setup
@@ -20,22 +21,12 @@ void MotorController::init() {
   initialized = true;
 }
 
-void MotorController::updateSensors() {
-  int rawR1 = analogRead(ANALOG_PIN_R1);
-  int rawL1 = analogRead(ANALOG_PIN_L1);
-  int rawR2 = analogRead(ANALOG_PIN_R2);
-  int rawL2 = analogRead(ANALOG_PIN_L2);
-
-  // Convert to voltage
-  sensorVoltages[R1] = rawR1 * 3.3 / 4095.0;
-  sensorVoltages[L1] = rawL1 * 3.3 / 4095.0;
-  sensorVoltages[R2] = rawR2 * 3.3 / 4095.0;
-  sensorVoltages[L2] = rawL2 * 3.3 / 4095.0;
+void MotorController::setMinSpeed(int min) {
+  minSpeed = constrain(min, 0, maxSpeed);
 }
 
-bool MotorController::offLine(int sensor) {
-  if (sensor < 0 || sensor > 3) return false;
-  return (sensorVoltages[sensor] > sensorThresholds[sensor]);
+void MotorController::setMaxSpeed(int max) {
+  maxSpeed = constrain(max, minSpeed, 255);
 }
 
 void MotorController::stopMotor(uint8_t chanFwd, uint8_t chanRev) {
@@ -43,23 +34,35 @@ void MotorController::stopMotor(uint8_t chanFwd, uint8_t chanRev) {
   ledcWrite(chanRev, 0);
 }
 
+// EXACTLY match working code's driveMotor logic including the "bug"
 void MotorController::driveMotor(uint8_t chanFwd, uint8_t chanRev, int speed) {
-  speed = constrain(speed, -255, 255);
+  // Constrain speed to -255 to 255 - exactly like working code
+  if (speed > 255) {
+    speed = 255;
+  } else if (speed < -255) {
+    speed = -255;
+  }
 
   if (speed > 0) {
     ledcWrite(chanRev, 0);
+    if (speed < minSpeed) {
+      speed = minSpeed;
+    }
     ledcWrite(chanFwd, speed);
-  }
-  else if (speed < 0) {
+  } else if (speed < 0) {
     ledcWrite(chanFwd, 0);
+    // CRITICAL: Keep the "bug" from working code that makes it work!
+    if (speed > -minSpeed) {
+      speed = minSpeed;  // This is the "bug" - should be -minSpeed but working code has minSpeed!
+    }
     ledcWrite(chanRev, -speed);
-  }
-  else {
+  } else {
     stopMotor(chanFwd, chanRev);
   }
 }
 
 void MotorController::setMotors(int left_speed, int right_speed) {
+  // Don't apply any additional constraints - let driveMotor handle it exactly like working code
   current_left_speed = left_speed;
   current_right_speed = right_speed;
   driveMotor(M1_CHAN_FWD, M1_CHAN_REV, left_speed);
@@ -73,30 +76,8 @@ void MotorController::stop() {
   stopMotor(M2_CHAN_FWD, M2_CHAN_REV);
 }
 
-float MotorController::getSensorVoltage(int sensor) const {
-  if (sensor >= 0 && sensor < 4) {
-    return sensorVoltages[sensor];
-  }
-  return 0.0;
-}
-
-void MotorController::setSensorThreshold(int sensor, float threshold) {
-  if (sensor >= 0 && sensor < 4) {
-    sensorThresholds[sensor] = threshold;
-  }
-}
-
 bool MotorController::isMoving() const {
   return (current_left_speed != 0 || current_right_speed != 0);
-}
-
-void MotorController::printSensorValues() {
-  updateSensors();
-  Serial.print("Sensors - R1: "); Serial.print(sensorVoltages[R1], 3);
-  Serial.print(" | L1: "); Serial.print(sensorVoltages[L1], 3);
-  Serial.print(" | R2: "); Serial.print(sensorVoltages[R2], 3);
-  Serial.print(" | L2: "); Serial.print(sensorVoltages[L2], 3);
-  Serial.print(" | Position: "); Serial.println(sensorVoltages[R1] - sensorVoltages[L1], 3);
 }
 
 void MotorController::printStatus() {
@@ -104,5 +85,7 @@ void MotorController::printStatus() {
   Serial.print("Initialized: "); Serial.println(initialized ? "Yes" : "No");
   Serial.print("Left Speed: "); Serial.println(current_left_speed);
   Serial.print("Right Speed: "); Serial.println(current_right_speed);
+  Serial.print("Speed Limits: Min="); Serial.print(minSpeed);
+  Serial.print(" Max="); Serial.println(maxSpeed);
   Serial.print("Moving: "); Serial.println(isMoving() ? "Yes" : "No");
 }
