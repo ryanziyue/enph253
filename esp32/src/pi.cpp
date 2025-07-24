@@ -11,18 +11,18 @@ PiResponse PiComm::processCommand(const String& cmd) {
     return PiResponse(false, "Invalid command format");
   }
   
-  // MOTOR CONTROL COMMANDS
   if (cmd.startsWith("PI:MC,")) {
     return handleMotorCommand(cmd);
   }
   else if (cmd.startsWith("PI:LF,")) {
     return handleLineFollowToggle(cmd);
   }
-  else if (cmd.startsWith("PI:LFS,")) {
-    return handleLineFollowSpeed(cmd);
+  else if (cmd.startsWith("PI:LBS,")) {
+    return handleBaseSpeed(cmd);
   }
-  
-  // ARM CONTROL COMMANDS
+  else if (cmd.startsWith("PI:LMS,")) {
+    return handleMinSpeed(cmd);
+  }
   else if (cmd.startsWith("PI:SP,")) {
     return handleServoPositionCommand(cmd);
   }
@@ -47,8 +47,6 @@ PiResponse PiComm::processCommand(const String& cmd) {
   else if (cmd.startsWith("PI:WLTD,")) {
     return handleWristLockTempDisable(cmd);
   }
-  
-  // STATUS REQUESTS
   else if (cmd.equals("PI:STATUS")) {
     return handleStatusRequest(cmd);
   }
@@ -102,26 +100,37 @@ PiResponse PiComm::handleLineFollowToggle(const String& cmd) {
   }
 }
 
-PiResponse PiComm::handleLineFollowSpeed(const String& cmd) {
-  // parse: PI:LFS,x
+PiResponse PiComm::handleBaseSpeed(const String& cmd) {
+  // parse: PI:LBS,x
   int speed = 0;
-  if (sscanf(cmd.c_str(), "PI:LFS,%d", &speed) != 1) {
-    return PiResponse(false, "Invalid line follow speed format. Use PI:LFS,speed");
+  if (sscanf(cmd.c_str(), "PI:LBS,%d", &speed) != 1) {
+    return PiResponse(false, "Invalid line follow speed format. Use PI:LBS,speed");
   }
   
   if (!lineFollower) {
     return PiResponse(false, "Line follower not available");
   }
   
-  // Set base speed in LineFollower
+  // set base speed in LineFollower
   lineFollower->setBaseSpeed(speed);
   
-  // Set minimum speed in MotorController (80% of base speed)
-  int minSpeed = speed * 0.8;
-  motors->setMinSpeed(minSpeed);
+  return PiResponse(true, "Base speed set to " + String(speed));
+}
+
+PiResponse PiComm::handleMinSpeed(const String& cmd) {
+  // parse: PI:LMS,x
+  int speed = 0;
+  if (sscanf(cmd.c_str(), "PI:LMS,%d", &speed) != 1) {
+    return PiResponse(false, "Invalid line follow speed format. Use PI:LMS,speed");
+  }
   
-  return PiResponse(true, "Line follow speed set to " + String(speed) + 
-                         " (min: " + String(minSpeed) + ")");
+  if (!lineFollower) {
+    return PiResponse(false, "Line follower not available");
+  }
+
+  motors->setMinSpeed(speed);
+
+  return PiResponse(true, "Min speed set to " + String(speed));
 }
 
 // ------- ARM CONTROL COMMANDS ------- 
