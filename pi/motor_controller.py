@@ -53,7 +53,7 @@ class MotorController:
         self.max_correction = 30  # Max speed correction for line following
         
         # Motor speed mapping parameters
-        self.min_motor_speed = 110  # Minimum speed where motors actually move
+        self.min_motor_speed = 150  # Minimum speed where motors actually move
         self.max_motor_speed = 255  # Maximum motor speed
         
         # Detection thresholds  
@@ -173,6 +173,12 @@ class MotorController:
         """Stop line following behavior."""
         self.line_following_active = False
         self.write_serial("PI:LF,0") # Toggle off line following on ESP
+
+    def set_base_speed(self, speed):
+        self.write_serial(f"PI:LBS,{speed}")
+
+    def set_min_speed(self, speed):
+        self.write_serial(f"PI:LMS,{speed}")
     
     # ========== LINE FOLLOWING CONTROL ==========
 

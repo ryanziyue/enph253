@@ -186,18 +186,19 @@ class RobotController:
         # self.sweep_thread = threading.Thread(target=self.servo_sweep, daemon=True)
         # self.sweep_thread.start()
 
+        while(self.running):
+            if self.object_detection_manager:
+                self._process_object_detection()
+
         self.motors.set_line_following_mode(LineFollowingMode.REFLECTANCE)
         self.arm.set_wrist_angle(5)
         self.arm.set_claw_angle(90)
         self.motors.set_motor_speeds(0,0)
-        self.arm.set_arm_angles(90, 150, 165)
-                
+        self.neutral_pos()
+
         input("Enter to start")
 
-        # self.motors.start_line_following()
-        # time.sleep(0.1)
-        # input("Enter to stop")
-        # self.motors.stop_line_following()
+        self.main_control()
 
         # self.motors.set_line_following_base_speed(150)
         # self.line_follow_until_curve(curve_threshold=15, averaging_window=3)
@@ -209,52 +210,27 @@ class RobotController:
         # self.turn_around(turn_right=False, starting_speed=70, min_speed=40, after_duration=0.5)
         # self.line_follow_time(1)
         
-        # input("Enter to pickup")
+        input("Enter to pickup")
 
+        # PICKUP
 
         # self.arm.set_wrist_angle(0)
 
-        # self.test_motor_functions()
+        # angles_to_check = [45, 55, 65, 75]
+        # arm_pos = [15,0,0]
+        # self.arm.set_arm_ik_position(15,5,wait_for_ack=True,timeout=1)
+        # # self.locate_pet(60,90,45,arm_pos,5, 0.2, 280)
+        # self.locate_pet_discrete([45,60,75],arm_pos)
+
+        # grab_pos = [15+10,-6,0]
+        # self.grab_pet_direct(grab_pos)
         # time.sleep(1)
-        # self.test_arm_functions()
-
-        # Test angle correction function
-        # self.test_angle_correction()
-
-        angles_to_check = [45, 55, 65, 75]
-        arm_pos = [15,2,0]
         
-        # self.arm.set_turret_angle(45, True, 1)
-        
-        # # # Use the new smooth detection method
-        # self.locate_pet(angles_to_check, arm_pos, max_search_iterations=1)
-        
-        # # # Alternative: Use sweep with smooth detection
-        # # # self.locate_pet_sweep(120,160,arm_pos)
-
-        # self.locate_pet_sweep(45,90,arm_pos)
-
-        # input("Enter to continue")
-
-        # pickup_pos = [30,-8,-10]
-        # drop_pos = [-10,25,-90]
-        # self.grab_pet_direct(pickup_pos, drop_pos)
-        # self.arm.set_arm_angles(turret=90, shoulder=110, elbow=0, wait_for_ack=True, timeout=3.0)
         # self.arm.set_wrist_angle_unlock(180)
-        # time.sleep(3)
+        # self.arm.set_arm_angles(elbow=0,wait_for_ack=True,timeout=0.5)
+        # self.arm.set_turret_angle(90)
+        # self.arm.set_arm_angles(shoulder=100, wait_for_ack=True,timeout=1.5)
         # self.arm.set_claw_angle(90)
-
-        # self.motors.start_line_following()
-        # self.line_follow_until_curve(curve_threshold=5, averaging_window=4)
-        # self.motors.stop_line_following()
-        # self.motors.stop_motors()
-        # print("Curve reached")
-        # input("Enter to continue line following")
-        # self.motors.start_line_following()
-
-        # self.test_curvature_detection(duration=120)
-
-        # self.arm.set_arm_ik_position(17,3,wait_for_ack=True,timeout=1.5)
         
         while self.running:
             try:
@@ -262,96 +238,15 @@ class RobotController:
                 current_time = time.time()
                 elapsed = current_time - self.start_time
 
-                # print("turret")
-                # self.arm.wait_for_limit_switch(timeout=5)
-                # print("run loop")
-                # time.sleep(1)
-                
-                # Process line following for camera 1 only
-                if self.line_manager_1:
-                    self._process_line_following()
+                input("Press enter to start")
+                self.motors.set_base_speed(210)
+                self.motors.set_min_speed(195)
+                self.line_follow_time(2.5, stop=False)
 
-                # input("Press to start")
-
-                # self.line_follow_until_curve(curve_threshold=25, averaging_window=3)
-
-                # turret_pos = input("Enter turret position")
-                # try:
-                #     self.arm.set_turret_angle(int(turret_pos), True, 1)
-                # except:
-                #     pass
-                
-                # result = self.object_detection_manager.run_detection_blocking()
-
-                # if (not result.found):
-                #     print("Not found, try again")
-                #     continue
-
-                # for iteration in range(2):
-                #     print(f"🔄 Centering iteration {iteration + 1}/{2}")
-            
-                #     # Calculate angle correction needed
-                #     angle_correction = self._calculate_angle_correction(
-                #         result.bbox, 40
-                #     )
-                    
-                #     print(f"   Pet center offset: {angle_correction:.1f}°")
-                    
-                #     # Check if already centered
-                #     if abs(angle_correction) <= 5:
-                #         print(f"✅ Pet centered! Final angle: {current_angle:.1f}°")
-                #         return True, current_angle, result
-                    
-                #     # Apply correction
-                #     new_angle = current_angle + angle_correction
-                    
-                #     # Clamp angle to reasonable range (adjust as needed for your turret)
-                #     new_angle = max(0, min(180, new_angle))
-                    
-                #     print(f"   Adjusting turret: {current_angle:.1f}° → {new_angle:.1f}°")
-
-                #     input("Enter to move turret")
-                    
-                #     success = self.arm.set_turret_angle(new_angle, wait_for_ack=True, timeout=2.0)
-                    
-                #     current_angle = new_angle
-
-
-                # Test blocking object detection
-                # if self.object_detection_manager:
-                #     start_time = time.time()
-                #     result = self.object_detection_manager.run_detection_blocking(timeout=1.0)
-                #     detection_time = time.time() - start_time
-                    
-                #     # Print detailed results every few loops
-                #     if self.loop_count % 10 == 0:  # Every 1 second at 10Hz
-                #         print(f"🎯 Blocking Detection Test:")
-                #         print(f"   Time taken: {detection_time:.3f}s")
-                #         print(f"   Found: {result.found}")
-                #         print(f"   Confidence: {result.confidence:.3f}")
-                #         print(f"   Class: {result.class_name}")
-                #         print(f"   Timestamp: {result.timestamp:.3f}")
-                #         if result.found:
-                #             print(f"   BBox: {result.bbox}")
-                #         print(f"   Loop: {self.loop_count}")
-                        
-                #         # Check if GUI is getting updated
-                #         if self.gui and result.found:
-                #             # Send detection annotation to GUI for camera 1
-                #             if result.bbox:
-                #                 x1, y1, x2, y2 = result.bbox
-                #                 bbox_annotation = BoundingBox(
-                #                     camera_id=1,  # Using camera 1 now
-                #                     x=x1, y=y1, 
-                #                     width=x2-x1, height=y2-y1,
-                #                     label=f"{result.class_name} ({result.confidence:.2f})",
-                #                     color=(0, 255, 0),
-                #                     thickness=2
-                #                 )
-                #                 self.gui.add_annotation(bbox_annotation, persistent=False)
-                #                 print(f"   📺 Sent annotation to GUI")
-                        
-                #         print("-" * 40)
+                self.motors.set_base_speed(190)
+                self.motors.set_min_speed(170)
+                # 1st and 2nd turn: CT=7, MT=20, AV=3
+                self.line_follow_until_curve(curve_threshold=7, max_threshold=20, averaging_window=3)
                 
                 # # Update motor controller with line following data
                 # if self.motors and self.line_manager_1:
@@ -375,7 +270,7 @@ class RobotController:
                 self.loop_count += 1
                 
                 # Control loop rate (10 Hz)
-                time.sleep(0.1)
+                time.sleep(0.05)
                 
             except Exception as e:
                 print(f"❌ Control loop error: {e}")
@@ -383,8 +278,131 @@ class RobotController:
         
         print("🔄 Control loop stopped")
         
+    def main_control(self):
+        # STEP 1: Move forward until the first curve
+        self.motors.set_base_speed(190)
+        self.motors.set_min_speed(175)
+        self.line_follow_time(1.5, stop=False)
+
+        self.motors.set_base_speed(165)
+        self.motors.set_min_speed(150)
+        # 1st and 2nd turn: CT=7, MT=20, AV=3
+        self.line_follow_until_curve(curve_threshold=7, max_threshold=20, averaging_window=3)
+        self.motors.set_motor_speeds_raw(180,180)
+        time.sleep(0.25)
+        self.motors.stop_motors()
+        
+        # STEP 2: Pick up the pet
+        input("Enter to start step 2")
+        self.arm.set_wrist_angle(0)
+
+        arm_pos = [15,0,0]
+        self.arm.set_arm_ik_position(15,5,wait_for_ack=True,timeout=1)
+        # self.locate_pet(60,90,45,arm_pos,5, 0.2, 280)
+        self.locate_pet_discrete([55,65,75],arm_pos)
+
+        grab_pos = [15+11,-6,0]
+        self.grab_pet_direct(grab_pos)
+        time.sleep(1)
+
+        self.neutral_pos()
+        
+        # self.arm.set_wrist_angle_unlock(180)
+        # self.arm.set_arm_angles(elbow=0,wait_for_ack=True,timeout=0.5)
+        # self.arm.set_turret_angle(90)
+        # self.arm.set_arm_angles(shoulder=100, wait_for_ack=True,timeout=1.5)
+        # self.arm.set_claw_angle(90)
+
+        input("Enter to start step 3")
+
+        # STEP 3: Move up the ramp until the third curve
+        self.motors.set_base_speed(190)
+        self.motors.set_min_speed(165)
+        self.line_follow_time(1.5, stop=False)
+
+        print("Step 2")      
+        self.motors.set_base_speed(210)
+        self.motors.set_min_speed(190)
+
+        self.line_follow_time(2, stop=False)        
+        print("Step 3")
+
+        self.motors.set_base_speed(190)
+        self.motors.set_min_speed(170)
+
+        self.line_follow_until_curve(curve_threshold=7, max_threshold=20, averaging_window=3)
+        self.motors.set_motor_speeds_raw(200,200)
+        time.sleep(0.5)
+        self.motors.stop_motors()
+
+        # STEP 4: Drop first pet into chute
+
+        input("Enter to start step 4")
+        
+        self.drop_into_chute()
+
+        # STEP 5: Pick up second pet
+
+        input("Enter to start step 5")
+
+        self.arm.set_wrist_angle(0)
+
+        arm_pos = [15,0,0]
+        self.arm.set_arm_ik_position(15,5,wait_for_ack=True,timeout=1.5)
+        # self.locate_pet(60,90,45,arm_pos,5, 0.2, 280)
+        self.locate_pet_discrete([130,115,100],arm_pos)
+
+        grab_pos = [15+11,-6,0]
+        self.grab_pet_direct(grab_pos)
+        time.sleep(1)
+
+        # STEP 6: Drop second pet into chute (same as step 4)
+
+        input("Enter to start step 6")
+        self.drop_into_chute()
+
+        # STEP 7: Line follow for around 1 sec, then pick up 3rd pet, then drop into basket
+
+        input("Enter to start step 7")
+        self.motors.set_base_speed(180)
+        self.motors.set_min_speed(165)
+        self.line_follow_time(1)
+
+        arm_pos = [15,15,0]
+        self.arm.set_arm_ik_position(15,20,wait_for_ack=True,timeout=1.5)
+        # self.locate_pet(60,90,45,arm_pos,5, 0.2, 280)
+        self.locate_pet_discrete([165,150,135,120,105,90],arm_pos)
+
+        grab_pos = [15+11,9,0]
+        self.grab_pet_direct(grab_pos)
+        time.sleep(1)
+
+        self.drop_into_basket()
+        self.neutral_pos()
+
+    def neutral_pos(self):
+        self.arm.set_arm_angles(90, 100, 120, wait_for_ack=True, timeout=1)
+        self.arm.set_arm_angles(90, 150, 165, wait_for_ack=True, timeout=1)
+
+    def drop_into_basket(self):
+        self.arm.set_wrist_angle_unlock(180)
+        self.arm.set_arm_angles(elbow=0,wait_for_ack=True,timeout=0.5)
+        self.arm.set_turret_angle(90)
+        self.arm.set_arm_angles(shoulder=100, wait_for_ack=True,timeout=2)
+        self.arm.set_claw_angle(90)
+
+    def drop_into_chute(self):
+        self.arm.set_arm_angles(90, 90, 0, wait_for_ack=True, timeout=1)
+        self.arm.set_wrist_angle(90)
+        self.arm.set_turret_angle(180, wait_for_ack=True, timeout=1)
+        self.arm.set_wrist_angle(50)
+        self.arm.set_arm_angles(elbow=20, wait_for_ack=True, timeout=1)
+        self.arm.set_claw_angle(90)
+        time.sleep(0.25)
+        self.arm.set_turret_angle(90)
+    
     def line_follow_until_curve(self, curve_threshold=5, max_threshold=40, 
-                               averaging_window=10, debug=False):
+                               averaging_window=10, debug=False, stop=True):
         """
         Follow line until a curve is detected using averaged curvature values.
         
@@ -464,79 +482,13 @@ class RobotController:
             time.sleep(0.025)
         
         # Stop line following
-        self.motors.stop_line_following()
+        if stop:
+            self.motors.stop_line_following()
         
         if debug:
             print(f"✅ Stopped line following after curve detection")
 
-    def test_curvature_detection(self, duration=30.0, show_plot=False):
-        """
-        Test curvature detection for a specified duration without line following.
-        Useful for calibrating threshold values.
-        
-        Args:
-            duration: How long to collect curvature data (seconds)
-            show_plot: Whether to show a plot of curvature values (requires matplotlib)
-        """
-        print(f"🧪 Testing curvature detection for {duration} seconds...")
-        print("   Move the robot along different line curvatures")
-        
-        curvature_values = []
-        timestamps = []
-        start_time = time.time()
-        
-        while time.time() - start_time < duration:
-            points = self.line_manager_1.get_line()
-            
-            if points:
-                curvature = self.motors.detect_curvature(points)
-                if curvature is not None:
-                    current_time = time.time() - start_time
-                    curvature_values.append(curvature)
-                    timestamps.append(current_time)
-                    
-                    # Print every 0.5 seconds
-                    if len(curvature_values) % 10 == 0:
-                        print(f"   t={current_time:.1f}s: Curvature = {curvature:.1f}°")
-            
-            time.sleep(0.05)
-        
-        if curvature_values:
-            # Calculate statistics
-            abs_values = [abs(v) for v in curvature_values]
-            avg_curvature = sum(abs_values) / len(abs_values)
-            max_curvature = max(abs_values)
-            min_curvature = min(abs_values)
-            
-            print(f"\n📊 Curvature Statistics:")
-            print(f"   Samples collected: {len(curvature_values)}")
-            print(f"   Average |curvature|: {avg_curvature:.1f}°")
-            print(f"   Max |curvature|: {max_curvature:.1f}°")
-            print(f"   Min |curvature|: {min_curvature:.1f}°")
-            print(f"\n   Suggested thresholds:")
-            print(f"   - Gentle curves: {avg_curvature + 5:.1f}°")
-            print(f"   - Sharp curves: {avg_curvature + 10:.1f}°")
-            print(f"   - Max threshold: {max_curvature + 10:.1f}°")
-            
-            if show_plot:
-                try:
-                    import matplotlib.pyplot as plt
-                    plt.figure(figsize=(10, 6))
-                    plt.plot(timestamps, curvature_values, 'b-', label='Curvature')
-                    plt.axhline(y=avg_curvature, color='g', linestyle='--', label=f'Avg: {avg_curvature:.1f}°')
-                    plt.axhline(y=-avg_curvature, color='g', linestyle='--')
-                    plt.xlabel('Time (s)')
-                    plt.ylabel('Curvature (degrees)')
-                    plt.title('Curvature Detection Test')
-                    plt.legend()
-                    plt.grid(True)
-                    plt.show()
-                except ImportError:
-                    print("   (matplotlib not available for plotting)")
-        else:
-            print("❌ No curvature data collected")
-
-    def line_follow_time(self, duration=1.0):
+    def line_follow_time(self, duration=1.0, stop=True):
         # Start Line Following
 
         self.motors.start_line_following()
@@ -548,7 +500,45 @@ class RobotController:
             if (line_status.get('line_found', False)):
                 self.motors.update_line_following(points)
 
-        self.motors.stop_line_following()
+        if(stop):
+            self.motors.stop_line_following()
+    
+    def line_follow_until_barrier(self, barrier_threshold=50, consecutive_detections=5, stop=True):
+        """
+        Follow line until a curve is detected using averaged curvature values.
+        
+        Args:
+            curve_threshold: Average curvature threshold for curve detection (degrees).
+                           Higher values = more pronounced curve needed to stop.
+                           Typical values: 5-25 degrees
+            max_threshold: Maximum curvature value to ignore outliers (degrees).
+                          Values above this are considered noise/errors.
+                          Typical value: 45-60 degrees
+            averaging_window: Number of recent curvature values to average.
+                            Default: 10 samples
+            debug: Print debug information about curvature detection
+        """
+        # Start Line Following
+        self.motors.start_line_following()
+        
+        # Initialize curvature history buffer
+        barrier_count = 0
+        barrier_detected = False
+        
+        while barrier_count < consecutive_detections:
+            # Get line points
+            barrier_percentage = self.get_barrier_data()
+            if barrier_percentage > barrier_threshold:
+                barrier_count += 1
+            else: 
+                barrier_count = 0
+            
+            # Small delay to prevent excessive CPU usage
+            time.sleep(0.025)
+        
+        # Stop line following
+        if stop:
+            self.motors.stop_line_following()
 
     def turn_around(self, turn_right=True, starting_speed=50, min_speed=25, center_target=0.1, after_duration=0):
 
@@ -639,272 +629,54 @@ class RobotController:
         self.motors.stop_motors()
         return False
 
-    def locate_pet(self, angles_to_check, arm_position, camera_fov_degrees=40, 
-                   max_search_iterations=3, centering_tolerance=5.0):
-        """
-        Locate and center pet using turret rotation and object detection.
+    def locate_pet_discrete(self, angles_to_check, arm_position, attempts=3):
         
-        Args:
-            angles_to_check: List of turret angles to check for pet detection
-            arm_position: 3-element array [x-pos, y-pos, wrist angle]
-            camera_fov_degrees: Camera field of view in degrees (default: 120)
-            max_search_iterations: Maximum iterations for fine-tuning centering
-            centering_tolerance: Angle tolerance for "centered" (degrees)
-            
-        Returns:
-            tuple: (success: bool, final_angle: float, detection_result)
-        """
-        if not self.arm or not self.object_detection_manager:
-            print("❌ Arm or object detection manager not available")
-            return False, 0.0, None
-        
-        print("🔍 Starting pet location sequence...")
-        
-        # Step 1: Move arm to viewing position
-        print(f"🦾 Moving arm to viewing position: {arm_position}")
-        self.arm.set_wrist_angle(arm_position[2])
-        self.arm.set_arm_ik_position(arm_position[0], arm_position[1], 
-                                    wait_for_ack=True, timeout=2.0)
+        self.arm.set_turret_angle(angles_to_check[0])
+        self.arm.set_arm_ik_position(arm_position[0], arm_position[1], wait_for_ack=True, timeout=1.5)
+        current_angle = angles_to_check[0]
+        result = self.object_detection_manager.run_detection_blocking()
 
-        time.sleep(0.5)  # Allow arm to stabilize
-        
-        # Step 2: Scan through angles to find pet
-        print(f"🔄 Scanning angles: {angles_to_check}")
-        pet_found = False
-        initial_detection_angle = 0.0
-        result = None
-        
-        for angle in angles_to_check:
-            print(f"🔍 Checking angle {angle}°...")
-            
-            # Move turret to angle with proper synchronization
-            success = self.arm.set_turret_angle(angle, wait_for_ack=True, timeout=2.0)
-            
-            # Run object detection multiple times to ensure fresh results
-            print(f"   Running object detection...")
-            
-            for attempt in range(3):  # Try 3 times
+        if not result.found:
+
+            print("Object was not found, trying other angles")
+            for i in range(1,len(angles_to_check)):
+                self.arm.set_turret_angle(angles_to_check[i])
+                current_angle = angles_to_check[0]
                 result = self.object_detection_manager.run_detection_blocking()
-                print(f"   Attempt {attempt+1}: Found={result.found}, Confidence={result.confidence:.3f}")
+
                 if result.found:
                     break
-                time.sleep(0.2)  # Small delay between attempts
-            
-            # Use the best detection result            
-            print(f"   Result: Found={result.found}, Confidence={result.confidence:.3f}")
-            
-            if result.found and result.confidence > 0.1:
-                print(f"🎯 Pet found at angle {angle}°! Confidence: {result.confidence:.3f}")
-                print(f"   BBox: {result.bbox}")
-                print(f"   Class: {result.class_name}")
-                pet_found = True
-                initial_detection_angle = angle
-                break
+
+            if not result.found:
+                print("Object was not found, we are cooked")
+
+        print("Object found")
+        last_error = 0
+
+        for i in range(attempts):
+            result = self.object_detection_manager.run_detection_blocking()
+            if (result.found):
+                print(((result.bbox[0] + result.bbox[2]) / 2))
+                center = (result.bbox_percent[0] + result.bbox_percent[2]) / 200
+                error = center - 0.5 # Positive Error = Turn right
+                last_error = error
+                
+                angle = self._calculate_angle_correction(result.bbox, 50)
+                current_angle += angle
+                self.arm.set_turret_angle(current_angle)
+                print(f"Object found - error = {error}, percent = {center}, angle = {angle}")
             else:
-                print(f"   No pet detected at {angle}° (best confidence: {result.confidence:.3f})")
-
-            time.sleep(1)
-        
-        if not pet_found:
-            print("😞 Pet not found in any of the search angles")
-            return False, 0.0, None
-        
-        # Step 3: Fine-tune centering
-        print("🎯 Fine-tuning pet centering...")
-        current_angle = initial_detection_angle
-        
-        for iteration in range(max_search_iterations):
-            print(f"🔄 Centering iteration {iteration + 1}/{max_search_iterations}")
-    
-            # Calculate angle correction needed
-            angle_correction = self._calculate_angle_correction(
-                result.bbox, camera_fov_degrees
-            )
-            
-            print(f"   Pet center offset: {angle_correction:.1f}°")
-            
-            # Check if already centered
-            if abs(angle_correction) <= centering_tolerance:
-                print(f"✅ Pet centered! Final angle: {current_angle:.1f}°")
-                return True, current_angle, result
-            
-            # Apply correction
-            new_angle = current_angle + angle_correction
-            
-            # Clamp angle to reasonable range (adjust as needed for your turret)
-            new_angle = max(0, min(180, new_angle))
-            
-            print(f"   Adjusting turret: {current_angle:.1f}° → {new_angle:.1f}°")
-            
-            success = self.arm.set_turret_angle(new_angle, wait_for_ack=True, timeout=2.0)
-            if not success:
-                print("⚠️ Failed to synchronize turret angle")
-                break
-            
-            current_angle = new_angle
-            # No additional wait needed - synchronization handles timing
-        
-        # Final check
-        result = self.object_detection_manager.run_detection()
-        if result.found:
-            final_correction = self._calculate_angle_correction(result.bbox, camera_fov_degrees)
-            print(f"🎯 Centering complete. Final offset: {final_correction:.1f}°")
-            return True, current_angle, result
-        else:
-            print("⚠️ Pet lost during centering process")
-            return False, current_angle, None
-    
-    def locate_pet_sweep(self, start_angle, end_angle, arm_position, 
-                        centering_tolerance=0.1):
-        """
-        Simplified pet location using continuous detection and proportional centering.
-        Continuously runs detection and adjusts turret until object is centered.
-        
-        Args:
-            start_angle: Starting angle for initial search
-            end_angle: Ending angle for initial search  
-            arm_position: 3-element array [x-pos, y-pos, wrist angle]
-            centering_tolerance: Distance tolerance as fraction of frame width (default: 0.05 = 5%)
-            
-        Returns:
-            tuple: (success: bool, final_angle: float, detection_result)
-        """
-        if not self.arm or not self.object_detection_manager:
-            print("❌ Arm or object detection manager not available")
-            return False, 0.0, None
-        
-        print("🔍 Starting simplified pet location with continuous detection...")
-        
-        # Move arm to viewing position
-        print(f"🦾 Moving arm to viewing position: {arm_position}")
-        self.arm.set_wrist_angle(arm_position[2])
-        self.arm.set_arm_ik_position(arm_position[0], arm_position[1], 
-                                     wait_for_ack=True, timeout=2.0)
-        
-        # Initial sweep to find pet
-        print(f"🔄 Initial sweep from {start_angle}° to {end_angle}°...")
-        
-        sweep_direction = 1 if end_angle > start_angle else -1
-        current_angle = start_angle
-        search_step = 5.0  # Fixed step size for initial search
-        
-        # Move to start position
-        self.arm.set_turret_angle(start_angle, wait_for_ack=True, timeout=2.0)
-        time.sleep(0.5)
-        
-        # Find pet with simple sweep
-        pet_found = False
-        while not pet_found and ((sweep_direction > 0 and current_angle <= end_angle) or 
-                                (sweep_direction < 0 and current_angle >= end_angle)):
-            
-            result = self.object_detection_manager.run_detection_blocking()
-            
-            if result.found and result.confidence > 0.1:
-                print(f"🎯 Pet found at angle {current_angle:.1f}°! Confidence: {result.confidence:.3f}")
-                pet_found = True
-                break
-            
-            # Move to next search position
-            current_angle += sweep_direction * search_step
-            self.arm.set_turret_angle(current_angle, wait_for_ack=False)
-            time.sleep(0.3)
-            print(f"   Searching... {current_angle:.1f}°")
-        
-        if not pet_found:
-            print("😞 Pet not found during initial sweep")
-            return False, current_angle, None
-        
-        # Continuous centering with proportional control
-        print("🎯 Starting proportional centering...")
-        
-        # Proportional control parameters
-        max_turn_speed = 5.0  # Maximum degrees per step
-        min_turn_speed = 2.0   # Minimum degrees per step
-        kp = 0.5               # Proportional gain (adjusted for pixel-based control)
-        
-        last_detection_time = time.time()
-        max_centering_time = 6.0
-        centering_start_time = time.time()
-        
-        while time.time() - centering_start_time < max_centering_time:
-            result = self.object_detection_manager.run_detection_blocking()
-            
-            if result.found and result.confidence > 0.1:
-                last_detection_time = time.time()
-                
-                # Get frame dimensions
-                frame = self.camera_manager.get_frame(self.object_detection_manager.camera_id)
-                if frame is None:
-                    continue
-                frame_width = 320
-                
-                # Calculate pet center and distance from frame center
-                pet_center_x = (result.bbox[0] + result.bbox[2]) / 2
-                frame_center_x = frame_width / 2
-                pixel_offset = pet_center_x - frame_center_x
-
-                print(f"Pet Center: {pet_center_x}")
-                
-                # Convert to fraction of frame width
-                offset_fraction = pixel_offset / frame_width
-                
-                # Check if centered (within tolerance)
-                if abs(offset_fraction) <= centering_tolerance:
-                    print(f"✅ Pet centered! Final angle: {current_angle:.1f}° "
-                          f"(offset: {offset_fraction*100:.1f}% of frame)")
-                    return True, current_angle, result
-                
-                # Proportional control based on pixel distance
-                # Scale the error by frame width to get a reasonable turn speed
-                error_magnitude = abs(offset_fraction) * 50  # Scale factor for degrees
-                turn_speed = max(min_turn_speed, min(max_turn_speed, error_magnitude * kp))
-                
-                # Apply correction
-                if offset_fraction > 0:
-                    # Pet is to the right, turn right
-                    new_angle = current_angle - turn_speed
-                    direction = "RIGHT"
+                print(f"Object not found, adjusting slightly")
+                if last_error > 0: # turn right
+                    current_angle -= 5
+                    self.arm.set_turret_angle(current_angle)
                 else:
-                    # Pet is to the left, turn left
-                    new_angle = current_angle + turn_speed
-                    direction = "LEFT"
-                
-                # Clamp angle to reasonable range
-                new_angle = max(0, min(180, new_angle))
-                
-                print(f"🎯 Pet offset: {offset_fraction*100:.1f}% of frame → {direction} {turn_speed:.1f}° "
-                      f"({current_angle:.1f}° → {new_angle:.1f}°)")
-                
-                # Move turret smoothly
-                self.arm.set_turret_angle(new_angle, wait_for_ack=False)
-                current_angle = new_angle
-                
-            else:
-                # Lost pet - simple recovery
-                if time.time() - last_detection_time > 2.0:
-                    print("⚠️ Lost pet - minor search...")
-                    # Small oscillation to find pet again
-                    search_offset = 3.0 if (time.time() % 2) < 1 else -3.0
-                    search_angle = max(0, min(180, current_angle + search_offset))
-                    self.arm.set_turret_angle(search_angle, wait_for_ack=False)
-                    current_angle = search_angle
+                    current_angle += 5
+                    self.arm.set_turret_angle(current_angle)
             
-            time.sleep(0.1)  # Control loop rate
-        
-        # Return final result
-        result = self.object_detection_manager.run_detection()
-        if result.found:
-            frame = self.camera_manager.get_frame(self.object_detection_manager.camera_id)
-            if frame is not None:
-                frame_width = frame.shape[1]
-                pet_center_x = (result.bbox[0] + result.bbox[2]) / 2
-                frame_center_x = frame_width / 2
-                final_offset = (pet_center_x - frame_center_x) / frame_width
-                print(f"🎯 Centering complete. Final offset: {final_offset*100:.1f}% of frame")
-            return True, current_angle, result
-        else:
-            print("⚠️ Centering timeout")
-            return False, current_angle, None
+            time.sleep(0.1)
+
+        return self.predict_object_distance(result.bbox, 8, frame_width=320)
     
     def _calculate_angle_correction(self, bbox, camera_fov_degrees):
         """
@@ -918,7 +690,7 @@ class RobotController:
             float: Angle correction in degrees (+ = turn right, - = turn left)
         """
         # Get actual frame dimensions from camera
-        frame_width = 640  # Default fallback
+        frame_width = 320  # Default fallback
         if self.camera_manager:
             try:
                 frame = self.camera_manager.get_frame(2)  # Object detection camera
@@ -949,35 +721,189 @@ class RobotController:
         # Negative = pet is left of center = turn left
         return -angle_correction
 
-    def grab_pet_direct(self, arm_position_1, arm_position_2):
+    def predict_object_distance(self, bbox, camera_fov_degrees, known_object_width=None, 
+                               known_object_height=None, frame_width=None, frame_height=None):
+        """
+        Predict the distance to an object using its bounding box and camera FOV.
+        
+        This function uses similar triangles and camera geometry to estimate distance.
+        Two methods are available:
+        1. Using known real-world object dimensions (more accurate)
+        2. Using angular size estimation (rough approximation)
+        
+        Args:
+            bbox: Bounding box [x1, y1, x2, y2] from object detection
+            camera_fov_degrees: Camera field of view in degrees (horizontal)
+            known_object_width: Real-world width of object in cm (optional, for method 1)
+            known_object_height: Real-world height of object in cm (optional, for method 1)
+            frame_width: Frame width in pixels (auto-detected if None)
+            frame_height: Frame height in pixels (auto-detected if None)
+            
+        Returns:
+            dict: Distance estimation results containing:
+                - distance_cm: Estimated distance in centimeters
+                - method: Method used ('known_size' or 'angular_estimate')
+                - confidence: Confidence level ('high', 'medium', 'low')
+                - angular_width_degrees: Angular width of object in degrees
+                - angular_height_degrees: Angular height of object in degrees
+                - pixel_width: Object width in pixels
+                - pixel_height: Object height in pixels
+        """
+        # Get frame dimensions
+        if frame_width is None or frame_height is None:
+            try:
+                # Try to get from camera manager
+                frame = self.camera_manager.get_frame(2)  # Object detection camera
+                if frame is not None:
+                    h, w = frame.shape[:2]
+                    frame_width = frame_width or w
+                    frame_height = frame_height or h
+                else:
+                    # Use object detection processing size as fallback
+                    frame_width = frame_width or 320
+                    frame_height = frame_height or 320
+            except:
+                frame_width = frame_width or 320
+                frame_height = frame_height or 320
+        
+        # Calculate object dimensions in pixels
+        x1, y1, x2, y2 = bbox
+        pixel_width = abs(x2 - x1)
+        pixel_height = abs(y2 - y1)
+        
+        # Calculate angular size of object
+        # Angular width = (pixel_width / frame_width) * camera_fov_degrees
+        angular_width_degrees = (pixel_width / frame_width) * camera_fov_degrees
+        
+        # Calculate vertical FOV assuming 4:3 or 16:9 aspect ratio
+        aspect_ratio = frame_width / frame_height
+        camera_fov_vertical = camera_fov_degrees / aspect_ratio
+        angular_height_degrees = (pixel_height / frame_height) * camera_fov_vertical
+        
+        # Method 1: Use known object dimensions (most accurate)
+        if known_object_width is not None:
+            # Distance = (real_width * frame_width) / (2 * pixel_width * tan(fov/2))
+            import math
+            fov_rad = math.radians(camera_fov_degrees)
+            
+            # Using horizontal dimension
+            distance_cm = (known_object_width * frame_width) / (2 * pixel_width * math.tan(fov_rad / 2))
+            method = "known_size_width"
+            confidence = "high"
+            
+            # If height is also known, calculate using height and average
+            if known_object_height is not None:
+                fov_vertical_rad = math.radians(camera_fov_vertical)
+                distance_cm_height = (known_object_height * frame_height) / (2 * pixel_height * math.tan(fov_vertical_rad / 2))
+                
+                # Average the two estimates
+                distance_cm = (distance_cm + distance_cm_height) / 2
+                method = "known_size_both"
+                confidence = "high"
+        
+        # Method 2: Angular size estimation (rough approximation)
+        else:
+            # This method assumes typical object sizes and is less accurate
+            # Rule of thumb: Most objects are 10-30cm wide when they fill ~10-30% of frame
+            
+            # Calculate what percentage of frame the object occupies
+            width_percentage = (pixel_width / frame_width) * 100
+            height_percentage = (pixel_height / frame_height) * 100
+            
+            # Rough estimation based on common object sizes
+            # This is a heuristic and should be calibrated for specific objects
+            if width_percentage > 50:
+                # Very close - object fills most of frame
+                estimated_distance = 20  # 20cm
+                confidence = "low"
+            elif width_percentage > 25:
+                # Close - object fills quarter of frame
+                estimated_distance = 50  # 50cm
+                confidence = "low"
+            elif width_percentage > 10:
+                # Medium distance
+                estimated_distance = 100  # 1 meter
+                confidence = "low"
+            elif width_percentage > 5:
+                # Far distance
+                estimated_distance = 200  # 2 meters
+                confidence = "low"
+            else:
+                # Very far
+                estimated_distance = 500  # 5 meters
+                confidence = "low"
+            
+            distance_cm = estimated_distance
+            method = "angular_estimate"
+        
+        # Package results
+        result = {
+            'distance_cm': round(distance_cm, 1),
+            'method': method,
+            'confidence': confidence,
+            'angular_width_degrees': round(angular_width_degrees, 2),
+            'angular_height_degrees': round(angular_height_degrees, 2),
+            'pixel_width': pixel_width,
+            'pixel_height': pixel_height,
+            'frame_width': frame_width,
+            'frame_height': frame_height,
+            'width_percentage': round((pixel_width / frame_width) * 100, 1),
+            'height_percentage': round((pixel_height / frame_height) * 100, 1)
+        }
+        
+        return distance_cm
+
+    def grab_pet_direct(self, arm_position_1):
         self.arm.set_wrist_angle(arm_position_1[2])
         self.arm.set_arm_ik_position(arm_position_1[0], arm_position_1[1], 
                                     wait_for_ack=True, timeout=2.0)
         time.sleep(0.5)
 
         self.arm.set_claw_angle(0)
-
-        time.sleep(0.5)
-        
-    def grab_pet(self, arm_position_1, speed, arm_position_2):
+    
+    def grab_pet_twostep(self, arm_position_1, speed, arm_position_2):
         self.arm.set_wrist_angle(arm_position_1[2])
         self.arm.set_arm_ik_position(arm_position_1[0], arm_position_1[1], 
-                                    wait_for_ack=True, timeout=3.0)
-        time.sleep(0.5)
-
-        self.arm.set_arm_ik_velocity(speed, 0, wait_for_ack=False)
-        self.arm.wait_for_limit_switch(timeout=5)
-
-        time.sleep(0.5)
-
-        self.arm.set_claw_angle(40)
-
+                                    wait_for_ack=True, timeout=2.0)
         time.sleep(0.5)
 
         self.arm.set_wrist_angle(arm_position_2[2])
         self.arm.set_arm_ik_position(arm_position_2[0], arm_position_2[1], 
-                                    wait_for_ack=True, timeout=2.0)
+                                    wait_for_ack=True, timeout=1.0)
+        
+        time.sleep(0.5)
+
+        self.arm.set_claw_angle(0)
+        
     
+    def get_barrier_data(self):
+        """
+        Get current barrier detection data.
+        
+        Returns:
+            float: barrier percentage
+        """
+        
+        try:
+            # Get current barrier percentage
+            barrier_percentage = self.line_manager_1.get_barrier_percentage()
+            
+            # Get barrier area coordinates
+            area_coords = self.line_manager_1.get_barrier_area_coords()
+            
+            # Get configuration
+            barrier_config = self.line_manager_1.config.get('barrier_detection', {})
+            threshold = barrier_config.get('brown_threshold_percent', 60.0)
+            enabled = barrier_config.get('enabled', True)
+            
+            # Determine if barrier is detected
+            barrier_detected = enabled and barrier_percentage > threshold
+            
+            return barrier_percentage
+            
+        except Exception as e:
+            return
+
     # ========== TEST FUNCTIONS ==========
     
     def test_serial_communication(self):
@@ -1247,110 +1173,7 @@ class RobotController:
                 print(f"❌ Error: {e}")
         
         print(f"\n✅ Angle correction test complete")
-  
-    def debug_object_detection_initialization(self):
-        """Debug object detection manager initialization."""
-        print("🔍 DEBUG: Object Detection Initialization")
-        print("=" * 60)
-        
-        if not self.object_detection_manager:
-            print("❌ Object detection manager is None!")
-            return
-        
-        # Check basic initialization
-        print(f"📊 Basic Status:")
-        print(f"   Manager exists: ✅")
-        print(f"   Camera ID: {self.object_detection_manager.camera_id}")
-        
-        # Check model loading
-        print(f"\n🤖 Model Status:")
-        print(f"   Model loaded: {self.object_detection_manager.model_loaded}")
-        
-        if hasattr(self.object_detection_manager, 'model'):
-            print(f"   Model object exists: {self.object_detection_manager.model is not None}")
-        else:
-            print(f"   Model attribute missing: ❌")
-        
-        # Check YOLO availability
-        try:
-            from ultralytics import YOLOWorld
-            print(f"   YOLO available: ✅")
-        except ImportError as e:
-            print(f"   YOLO available: ❌ ({e})")
-        
-        # Check configuration
-        print(f"\n⚙️ Configuration:")
-        if hasattr(self.object_detection_manager, 'config'):
-            config = self.object_detection_manager.config
-            print(f"   Model file: {config.get('model', {}).get('model_file', 'NOT SET')}")
-            print(f"   Classes: {config.get('model', {}).get('classes', 'NOT SET')}")
-            print(f"   Confidence threshold: {config.get('model', {}).get('confidence_threshold', 'NOT SET')}")
-            print(f"   Crop settings: {config.get('crop', 'NOT SET')}")
-        else:
-            print(f"   Config missing: ❌")
-        
-        # Check camera connectivity
-        print(f"\n📷 Camera Status:")
-        frame = self.camera_manager.get_frame(self.object_detection_manager.camera_id)
-        if frame is not None:
-            height, width = frame.shape[:2]
-            print(f"   Camera {self.object_detection_manager.camera_id}: ✅ ({width}x{height})")
-        else:
-            print(f"   Camera {self.object_detection_manager.camera_id}: ❌ No frame")
-        
-        # Test detection status
-        print(f"\n🎯 Detection Status:")
-        try:
-            status = self.object_detection_manager.get_detection_status()
-            print(f"   Last detection found: {status.get('detection_found', 'N/A')}")
-            print(f"   Detection count: {status.get('detection_count', 'N/A')}")
-            print(f"   Last detection time: {status.get('last_detection_time', 'N/A')}")
-            
-            if 'last_detection' in status:
-                last = status['last_detection']
-                print(f"   Last result: found={last.found}, conf={last.confidence:.3f}, class='{last.class_name}'")
-        except Exception as e:
-            print(f"   Status check failed: ❌ ({e})")
-        
-        # Test model file existence
-        print(f"\n📁 File System Check:")
-        try:
-            model_file = self.object_detection_manager.config['model']['model_file']
-            import os
-            if os.path.exists(model_file):
-                size = os.path.getsize(model_file) / (1024*1024)  # MB
-                print(f"   Model file exists: ✅ ({size:.1f} MB)")
-            else:
-                print(f"   Model file missing: ❌ ({model_file})")
-                # Check current directory
-                print(f"   Current directory: {os.getcwd()}")
-                print(f"   Files in current dir: {os.listdir('.')[:10]}...")  # First 10 files
-        except Exception as e:
-            print(f"   File check failed: ❌ ({e})")
-        
-        # Test basic detection call
-        print(f"\n🧪 Detection Test:")
-        try:
-            print("   Testing run_detection()...")
-            result = self.object_detection_manager.run_detection()
-            print(f"   Result: found={result.found}, conf={result.confidence:.3f}, class='{result.class_name}'")
-            print(f"   Timestamp: {result.timestamp}")
-            
-            print("   Testing run_detection_blocking()...")
-            start_time = time.time()
-            result_blocking = self.object_detection_manager.run_detection_blocking(timeout=2.0)
-            duration = time.time() - start_time
-            print(f"   Blocking result: found={result_blocking.found}, conf={result_blocking.confidence:.3f}")
-            print(f"   Duration: {duration:.3f}s")
-            
-        except Exception as e:
-            print(f"   Detection test failed: ❌ ({e})")
-            import traceback
-            traceback.print_exc()
-        
-        print("=" * 60)
-  
-    # UNUSED
+
     def _process_line_following(self):
         """Process line following and compute statistics."""
         # Get line detection points for camera 1 only
@@ -1388,6 +1211,72 @@ class RobotController:
                 print(f"\n❌ Object detection error: {e}")
                 self.last_object_detection_time = current_time
     
+    def test_curvature_detection(self, duration=30.0, show_plot=False):
+        """
+        Test curvature detection for a specified duration without line following.
+        Useful for calibrating threshold values.
+        
+        Args:
+            duration: How long to collect curvature data (seconds)
+            show_plot: Whether to show a plot of curvature values (requires matplotlib)
+        """
+        print(f"🧪 Testing curvature detection for {duration} seconds...")
+        print("   Move the robot along different line curvatures")
+        
+        curvature_values = []
+        timestamps = []
+        start_time = time.time()
+        
+        while time.time() - start_time < duration:
+            points = self.line_manager_1.get_line()
+            
+            if points:
+                curvature = self.motors.detect_curvature(points)
+                if curvature is not None:
+                    current_time = time.time() - start_time
+                    curvature_values.append(curvature)
+                    timestamps.append(current_time)
+                    
+                    # Print every 0.5 seconds
+                    print(f"   t={current_time:.1f}s: Curvature = {curvature:.1f}°")
+            
+            time.sleep(0.05)
+        
+        if curvature_values:
+            # Calculate statistics
+            abs_values = [abs(v) for v in curvature_values]
+            avg_curvature = sum(abs_values) / len(abs_values)
+            max_curvature = max(abs_values)
+            min_curvature = min(abs_values)
+            
+            print(f"\n📊 Curvature Statistics:")
+            print(f"   Samples collected: {len(curvature_values)}")
+            print(f"   Average |curvature|: {avg_curvature:.1f}°")
+            print(f"   Max |curvature|: {max_curvature:.1f}°")
+            print(f"   Min |curvature|: {min_curvature:.1f}°")
+            print(f"\n   Suggested thresholds:")
+            print(f"   - Gentle curves: {avg_curvature + 5:.1f}°")
+            print(f"   - Sharp curves: {avg_curvature + 10:.1f}°")
+            print(f"   - Max threshold: {max_curvature + 10:.1f}°")
+            
+            if show_plot:
+                try:
+                    import matplotlib.pyplot as plt
+                    plt.figure(figsize=(10, 6))
+                    plt.plot(timestamps, curvature_values, 'b-', label='Curvature')
+                    plt.axhline(y=avg_curvature, color='g', linestyle='--', label=f'Avg: {avg_curvature:.1f}°')
+                    plt.axhline(y=-avg_curvature, color='g', linestyle='--')
+                    plt.xlabel('Time (s)')
+                    plt.ylabel('Curvature (degrees)')
+                    plt.title('Curvature Detection Test')
+                    plt.legend()
+                    plt.grid(True)
+                    plt.show()
+                except ImportError:
+                    print("   (matplotlib not available for plotting)")
+        else:
+            print("❌ No curvature data collected")
+
     # SERIAL STUFF
     def write_serial(self, message: str) -> bool:
         """Write a message to the serial port."""
@@ -1526,65 +1415,6 @@ class RobotController:
         except Exception as e:
             print(f"❌ Error updating motor line following: {e}")
     
-    def get_barrier_data(self):
-        """
-        Get current barrier detection data.
-        
-        Returns:
-            dict: Barrier detection data containing:
-                - barrier_percentage: Current brown percentage in detection area (0-100)
-                - barrier_detected: Boolean indicating if barrier is detected
-                - area_coords: Tuple of (y1, y2, x1, x2) detection area coordinates
-                - threshold: Brown threshold percentage for barrier detection
-                - enabled: Whether barrier detection is enabled
-        """
-        if not self.line_manager_1:
-            return {
-                'barrier_percentage': 0.0,
-                'barrier_detected': False,
-                'area_coords': None,
-                'threshold': 0.0,
-                'enabled': False,
-                'error': 'Line manager not initialized'
-            }
-        
-        try:
-            # Get current barrier percentage
-            barrier_percentage = self.line_manager_1.get_barrier_percentage()
-            
-            # Get barrier area coordinates
-            area_coords = self.line_manager_1.get_barrier_area_coords()
-            
-            # Get configuration
-            barrier_config = self.line_manager_1.config.get('barrier_detection', {})
-            threshold = barrier_config.get('brown_threshold_percent', 60.0)
-            enabled = barrier_config.get('enabled', True)
-            
-            # Determine if barrier is detected
-            barrier_detected = enabled and barrier_percentage > threshold
-            
-            return {
-                'barrier_percentage': barrier_percentage,
-                'barrier_detected': barrier_detected,
-                'area_coords': area_coords,
-                'threshold': threshold,
-                'enabled': enabled,
-                'area_width_percent': barrier_config.get('area_width_percent', 40.0),
-                'area_height_percent': barrier_config.get('area_height_percent', 20.0),
-                'center_x_percent': barrier_config.get('center_x_percent', 50.0),
-                'bottom_offset_percent': barrier_config.get('bottom_offset_percent', 5.0)
-            }
-            
-        except Exception as e:
-            return {
-                'barrier_percentage': 0.0,
-                'barrier_detected': False,
-                'area_coords': None,
-                'threshold': 0.0,
-                'enabled': False,
-                'error': f'Error retrieving barrier data: {e}'
-            }
-    
     def run(self):
         """Run the robot controller (blocking)."""
         try:
@@ -1668,325 +1498,6 @@ class RobotController:
         """
         if self.gui:
             self.gui.add_annotation(annotation, persistent)
-    
-    def handle_keyboard_controls(self):
-        """Handle keyboard controls when running without GUI."""
-        print("\n📋 Keyboard Controls:")
-        print("  R - Reset adaptive centers")
-        print("  T - Reset distance statistics")
-        print("  1 - Toggle camera 1 line following")
-        print("  2 - Toggle camera 2 line following")
-        print("  O - Show object detection status")
-        print("  D - Launch object detection GUI")
-        print("  S - Show serial status")
-        print("  M - Send manual serial message")
-        print("  A - Show arm status")
-        print("  H - Home arm") 
-        print("  C - Open/close claw")
-        print("  G - Grab object sequence")
-        print("  J - Set arm position (x,y)")
-        print("  T - Set turret angle")
-        print("  K - Set wrist angle")
-        print("  Y - Set claw position (0-100)")
-        print("  Z - Stop arm movement")
-        print("  F - Start/stop line following")
-        print("  E - Emergency stop motors")
-        print("  W/S - Move forward/backward")  
-        print("  Left/Right - Turn left/right")
-        print("  P - Show motor PID parameters")
-        print("  U - Update PID parameters")
-        print("  V - Set motor speeds")
-        print("  L - Switch line following mode")
-        print("  N - Navigate to heading")
-        print("  B - Test barrier handling")
-        print("  X - Show motor status")
-        print("  ! - Toggle motor debug mode")
-        print("  Q - Quit")
-        
-        while self.running:
-            try:
-                # Simple keyboard input (requires Enter)
-                user_input = input().lower().strip()
-                
-                if user_input == 'q':
-                    self.running = False
-                    break
-                elif user_input == 'r':
-                    if self.line_manager_1:
-                        self.line_manager_1.reset_adaptive_center()
-                        print("🎯 Adaptive center reset for camera 1")
-                elif user_input == 't':
-                    self.reset_distance_stats()
-                elif user_input == '1':
-                    if self.line_manager_1:
-                        self.line_manager_1.adaptive_center_enabled = not self.line_manager_1.adaptive_center_enabled
-                        status = "enabled" if self.line_manager_1.adaptive_center_enabled else "disabled"
-                        print(f"📏 Camera 1 line following {status}")
-                elif user_input == '2':
-                    if self.object_detection_manager:
-                        print(f"📷 Camera 2 is used for object detection, not line following")
-                elif user_input == 'o':
-                    if self.object_detection_manager:
-                        obj_status = self.object_detection_manager.get_detection_status()
-                        print(f"\n🎯 Object Detection Status:")
-                        print(f"  Model Loaded: {obj_status['model_loaded']}")
-                        print(f"  Camera: {obj_status['camera_id']}")
-                        print(f"  Total Detections: {obj_status['detection_count']}")
-                        print(f"  Last Detection: {obj_status['last_detection'].class_name if obj_status['last_detection'].found else 'None'}")
-                        if obj_status['last_detection'].found:
-                            print(f"  Confidence: {obj_status['last_detection'].confidence:.3f}")
-                            print(f"  Bbox: {obj_status['last_detection'].bbox}")
-                        crop = obj_status['crop_settings']
-                        print(f"  Crop: T:{crop['crop_top']} B:{crop['crop_bottom']} L:{crop['crop_left']} R:{crop['crop_right']}")
-                elif user_input == 'd':
-                    print("🎯 Launching object detection GUI...")
-                    try:
-                        import subprocess
-                        subprocess.Popen(['python3', 'object_detection_ui.py', '--camera', str(self.object_detection_manager.camera_id)])
-                        print("✅ Object detection GUI launched in separate process")
-                    except Exception as e:
-                        print(f"❌ Failed to launch GUI: {e}")
-                elif user_input == 's':
-                    if self.ser and self.ser.is_open:
-                        print(f"\n📡 Serial Status:")
-                        print(f"  Port: {self.serial_port}")
-                        print(f"  Baudrate: {self.baudrate}")
-                        print(f"  Open: {self.ser.is_open}")
-                    else:
-                        print("❌ Serial port not available ._.")
-                elif user_input == 'm':
-                    if self.ser and self.ser.is_open:
-                        test_message = input("Enter message to send: ")
-                        if test_message.strip():
-                            self.write_serial(test_message.strip())
-                    else:
-                        print("❌ Serial port not available ._.")
-                elif user_input == 'a':
-                    if self.arm:
-                        status = self.arm.get_arm_status()
-                        print(f"\n🦾 Arm Status:")
-                        print(f"  Turret: {status['turret_angle']}°")
-                        print(f"  Position: {status['position']}")
-                        print(f"  Wrist: {status['wrist_angle']}°")
-                        print(f"  Claw: {status['claw_state']} ({status['claw_position']}%)")
-                    else:
-                        print("❌ Arm controller not available")
-                elif user_input == 'h':
-                    if self.arm:
-                        self.arm.home_arm()
-                    else:
-                        print("❌ Arm controller not available")
-                elif user_input == 'c':
-                    if self.arm:
-                        if self.arm.claw_state.value == 'open':
-                            self.arm.close_claw()
-                        else:
-                            self.arm.open_claw()
-                    else:
-                        print("❌ Arm controller not available")
-                elif user_input == 'g':
-                    if self.arm:
-                        try:
-                            x = float(input("Enter object X position: "))
-                            y = float(input("Enter object Y position: "))
-                            success = self.arm.grab_object(x, y)
-                            print(f"🦾 Grab sequence {'completed' if success else 'failed'}")
-                        except ValueError:
-                            print("❌ Invalid position input")
-                    else:
-                        print("❌ Arm controller not available")
-                elif user_input == 'j':
-                    if self.arm:
-                        try:
-                            x = float(input(f"Enter X position (current: {self.arm.arm_position['x']}): "))
-                            y = float(input(f"Enter Y position (current: {self.arm.arm_position['y']}): "))
-                            speed = int(input("Enter movement speed (0-100, default 50): ") or "50")
-                            success = self.arm.set_arm_position(x, y, speed)
-                            if success:
-                                print(f"🦾 Moving arm to ({x}, {y})")
-                        except ValueError:
-                            print("❌ Invalid input")
-                    else:
-                        print("❌ Arm controller not available")
-                elif user_input == 'k':
-                    if self.arm:
-                        try:
-                            angle = float(input(f"Enter wrist angle (0-180°, current: {self.arm.wrist_angle}°): "))
-                            success = self.arm.set_wrist_angle(angle)
-                            if success:
-                                print(f"🦾 Wrist angle set to {angle}°")
-                        except ValueError:
-                            print("❌ Invalid angle input")
-                    else:
-                        print("❌ Arm controller not available")
-                elif user_input == 'y':
-                    if self.arm:
-                        try:
-                            position = int(input(f"Enter claw position (0=closed, 100=open, current: {self.arm.claw_position}): "))
-                            speed = int(input("Enter speed (0-100, default 50): ") or "50")
-                            success = self.arm.set_claw_position(position, speed)
-                            if success:
-                                print(f"🦾 Claw position set to {position}%")
-                        except ValueError:
-                            print("❌ Invalid input")
-                    else:
-                        print("❌ Arm controller not available")
-                elif user_input == 'z':
-                    if self.arm:
-                        success = self.arm.stop_arm()
-                        if success:
-                            print("🛑 Arm movement stopped")
-                    else:
-                        print("❌ Arm controller not available")
-                elif user_input == 't':
-                    if self.arm:
-                        try:
-                            angle = float(input(f"Enter turret angle (0-180°, current: {self.arm.turret_angle}°): "))
-                            success = self.arm.set_turret_angle(angle)
-                            if success:
-                                print(f"🔄 Turret angle set to {angle}°")
-                        except ValueError:
-                            print("❌ Invalid angle input")
-                    else:
-                        print("❌ Arm controller not available")
-                elif user_input == 'f':
-                    if self.motors:
-                        if self.motors.line_following_active:
-                            self.stop_line_following()
-                            print("📏 Line following stopped")
-                        else:
-                            self.start_line_following('camera')
-                            print("📏 Line following started (camera mode)")
-                    else:
-                        print("❌ Motor controller not available")
-                elif user_input == 'e':
-                    self.emergency_stop()
-                elif user_input == 'w':
-                    if self.motors:
-                        self.motors.move_forward(60)
-                        print("⬆️ Moving forward")
-                    else:
-                        print("❌ Motor controller not available")
-                elif user_input == 's':
-                    if self.motors:
-                        self.motors.move_backward(60)
-                        print("⬇️ Moving backward")
-                    else:
-                        print("❌ Motor controller not available")
-                elif user_input == 'left':
-                    if self.motors:
-                        self.motors.turn_left(40)
-                        print("⬅️ Turning left")
-                    else:
-                        print("❌ Motor controller not available")
-                elif user_input == 'right':
-                    if self.motors:
-                        self.motors.turn_right(40)
-                        print("➡️ Turning right")
-                    else:
-                        print("❌ Motor controller not available")
-                elif user_input == 'stop':
-                    if self.motors:
-                        self.motors.stop_motors()
-                        print("🛑 Motors stopped")
-                    else:
-                        print("❌ Motor controller not available")
-                elif user_input == 'p':
-                    if self.motors:
-                        params = self.motors.pid_params
-                        print(f"\\n🎛️ PID Parameters:")
-                        print(f"  Kp (Proportional): {params['kp']}")
-                        print(f"  Ki (Integral): {params['ki']}")
-                        print(f"  Kd (Derivative): {params['kd']}")
-                        print(f"  Current Integral: {params['integral']:.2f}")
-                        print(f"  Last Error: {params['last_error']:.2f}")
-                    else:
-                        print("❌ Motor controller not available")
-                elif user_input == 'u':
-                    if self.motors:
-                        try:
-                            kp = float(input("Enter new Kp value (current: {:.1f}): ".format(self.motors.pid_params['kp'])))
-                            ki = float(input("Enter new Ki value (current: {:.1f}): ".format(self.motors.pid_params['ki'])))
-                            kd = float(input("Enter new Kd value (current: {:.1f}): ".format(self.motors.pid_params['kd'])))
-                            self.motors.set_pid_parameters(kp, ki, kd)
-                            print("✅ PID parameters updated")
-                        except ValueError:
-                            print("❌ Invalid input - PID parameters not changed")
-                    else:
-                        print("❌ Motor controller not available")
-                elif user_input == 'v':
-                    if self.motors:
-                        try:
-                            base_speed = int(input(f"Enter base speed (current: {self.motors.base_speed}): "))
-                            turn_speed = int(input(f"Enter turn speed (current: {self.motors.turn_speed}): "))
-                            self.motors.set_speeds(base_speed, turn_speed)
-                            print("✅ Motor speeds updated")
-                        except ValueError:
-                            print("❌ Invalid input - speeds not changed")
-                    else:
-                        print("❌ Motor controller not available")
-                elif user_input == 'l':
-                    if self.motors:
-                        print("\\nLine Following Modes:")
-                        print("  1 - Camera-based")
-                        print("  2 - Reflectance sensor")
-                        print("  3 - Disabled")
-                        choice = input("Select mode (1-3): ").strip()
-                        
-                        if choice == '1':
-                            self.motors.set_line_following_mode(LineFollowingMode.CAMERA)
-                        elif choice == '2':
-                            self.motors.set_line_following_mode(LineFollowingMode.REFLECTANCE)
-                        elif choice == '3':
-                            self.motors.set_line_following_mode(LineFollowingMode.DISABLED)
-                        else:
-                            print("❌ Invalid choice")
-                    else:
-                        print("❌ Motor controller not available")
-                elif user_input == 'n':
-                    if self.motors:
-                        try:
-                            heading = float(input(f"Enter target heading (0-360°, current: {self.motors.current_heading:.1f}°): "))
-                            if 0 <= heading <= 360:
-                                self.motors.turn_to_heading(heading)
-                            else:
-                                print("❌ Heading must be between 0-360°")
-                        except ValueError:
-                            print("❌ Invalid heading input")
-                    else:
-                        print("❌ Motor controller not available")
-                elif user_input == 'b':
-                    if self.motors:
-                        print("🚧 Testing barrier handling...")
-                        # Simulate barrier detection
-                        barrier_detected = self.motors.detect_barrier(point_count=2, brown_percentage=80)
-                        if barrier_detected:
-                            print("✅ Barrier detection triggered")
-                            success = self.motors.handle_barrier()
-                            print(f"🔄 Barrier handling {'successful' if success else 'failed'}")
-                        else:
-                            print("ℹ️ No barrier detected with test parameters")
-                    else:
-                        print("❌ Motor controller not available")
-                elif user_input == 'x':
-                    if self.motors:
-                        status = self.motors.get_motor_status()
-                        print(f"\\n🚗 Motor Controller Status:")
-                        print(f"  Left Speed: {status['motor_speeds']['left']}")
-                        print(f"  Right Speed: {status['motor_speeds']['right']}")
-                        print(f"  Is Moving: {status['is_moving']}")
-                        print(f"  Line Following: {status['line_following']['active']} ({status['line_following']['mode']})")
-                        print(f"  Last Line Center: {status['line_following']['last_center']:.1f}%")
-                        print(f"  Current Heading: {status['navigation']['current_heading']:.1f}°")
-                        print(f"  Target Heading: {status['navigation']['target_heading']:.1f}°")
-                        print(f"  Base Speed: {status['speeds']['base_speed']}")
-                        print(f"  Turn Speed: {status['speeds']['turn_speed']}")
-                    else:
-                        print("❌ Motor controller not available")
-                        
-            except (EOFError, KeyboardInterrupt):
-                self.running = False
-                break
 
 # Signal handler
 def signal_handler(sig, frame):
@@ -2043,12 +1554,6 @@ def main():
                      color=(255, 255, 0), font_scale=0.7),
                 persistent=True
             )
-        
-        # Run main loop - with or without console controls
-        if args.no_gui and args.console:
-            # Start console controls in a separate thread
-            console_thread = threading.Thread(target=controller.handle_keyboard_controls, daemon=True)
-            console_thread.start()
         
         # Run main loop
         controller.run()

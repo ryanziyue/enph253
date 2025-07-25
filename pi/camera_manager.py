@@ -19,7 +19,9 @@ import threading
 import signal
 import sys
 import platform
-from typing import Optional, Dict, Tuple, List
+import os
+import glob
+from typing import Optional, Dict, Tuple, List, Union
 from dataclasses import dataclass
 
 
@@ -32,6 +34,151 @@ class CameraStatus:
     last_frame_time: float = 0.0
     error_count: int = 0
     last_error: str = ""
+
+
+def resolve_device_identifier(device_identifier: Union[int, str]) -> int:
+    """
+    Resolve device identifier to OpenCV-compatible device ID.
+    
+    Args:
+        device_identifier: Either an integer device ID or a string device name/path
+        
+    Returns:
+        int: OpenCV device ID
+        
+    Raises:
+        ValueError: If device identifier cannot be resolved
+    """
+    # If it's already an integer, return as-is
+    if isinstance(device_identifier, int):
+        return device_identifier
+    
+    # If it's a string, try to resolve it
+    if isinstance(device_identifier, str):
+        # Check if it's a numeric string
+        if device_identifier.isdigit():
+            return int(device_identifier)
+        
+        # On Linux, try to resolve device name to /dev/video* path
+        if platform.system().lower() == 'linux':
+            return _resolve_linux_device_name(device_identifier)
+        
+        # On other platforms, try to parse as direct path
+        if device_identifier.startswith('/dev/video'):
+            try:
+                return int(device_identifier.replace('/dev/video', ''))
+            except ValueError:
+                pass
+        
+        # If all else fails, try to use it directly as a path
+        # Some OpenCV builds support string paths
+        try:
+            # Test if OpenCV can open it directly
+            test_cap = cv2.VideoCapture(device_identifier)
+            if test_cap.isOpened():
+                test_cap.release()
+                return device_identifier  # Return string if it works
+        except:
+            pass
+    
+    raise ValueError(f"Could not resolve device identifier: {device_identifier}")
+
+def _resolve_linux_device_name(device_name: str) -> int:
+    """
+    Resolve Linux device name to /dev/video* device ID.
+    
+    Args:
+        device_name: Device name like "usb-xhci-hcd.0-1"
+        
+    Returns:
+        int: Device ID number
+        
+    Raises:
+        ValueError: If device name cannot be resolved
+    """
+    try:
+        # Look in /sys/class/video4linux/ for device links
+        video_devices = glob.glob('/sys/class/video4linux/video*')
+        
+        for video_path in video_devices:
+            try:
+                # Read the device symlink to get the actual device path
+                device_link = os.readlink(video_path)
+                
+                # Check if our device name appears in the link path
+                if device_name in device_link:
+                    # Extract video device number
+                    video_num = os.path.basename(video_path).replace('video', '')
+                    device_id = int(video_num)
+                    print(f"📷 Resolved device '{device_name}' to /dev/video{device_id}")
+                    return device_id
+                    
+            except (OSError, ValueError) as e:
+                # Skip devices we can't read or parse
+                continue
+        
+        # Alternative method: check udev info
+        return _resolve_linux_device_udev(device_name)
+        
+    except Exception as e:
+        raise ValueError(f"Could not resolve Linux device name '{device_name}': {e}")
+
+def _resolve_linux_device_udev(device_name: str) -> int:
+    """
+    Alternative method using udev information to resolve device names.
+    
+    Args:
+        device_name: Device name like "usb-xhci-hcd.0-1"
+        
+    Returns:
+        int: Device ID number
+        
+    Raises:
+        ValueError: If device name cannot be resolved
+    """
+    try:
+        import subprocess
+        
+        # Use v4l2-ctl to list devices if available
+        try:
+            result = subprocess.run(['v4l2-ctl', '--list-devices'], 
+                                  capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                lines = result.stdout.split('\n')
+                found_device = False
+                
+                for i, line in enumerate(lines):
+                    if device_name in line:
+                        found_device = True
+                        continue
+                    
+                    # Look for /dev/video* in subsequent lines
+                    if found_device and '/dev/video' in line:
+                        video_path = line.strip()
+                        device_id = int(video_path.replace('/dev/video', ''))
+                        print(f"📷 Resolved device '{device_name}' to {video_path} (ID: {device_id})")
+                        return device_id
+                        
+        except (subprocess.SubprocessError, FileNotFoundError):
+            pass
+        
+        # Last resort: try lsusb and map to video devices
+        video_devices = glob.glob('/dev/video*')
+        for video_dev in sorted(video_devices):
+            try:
+                device_id = int(video_dev.replace('/dev/video', ''))
+                # Try to open and check if it matches somehow
+                # This is a basic fallback - not perfect but better than failing
+                if device_id < 10:  # Reasonable range
+                    print(f"⚠️ Using fallback mapping for '{device_name}' -> {video_dev} (ID: {device_id})")
+                    return device_id
+            except ValueError:
+                continue
+                
+    except Exception:
+        pass
+    
+    raise ValueError(f"Could not resolve device name '{device_name}' using any method")
 
 
 class CameraHandle:
@@ -53,6 +200,9 @@ class CameraHandle:
         # Downsampling
         self.downsample_factor = config.get('downsample_factor', 1.0)
         
+        # Device resolution
+        self.resolved_device_id = None
+        
         # Homography transformation
         self.homography_enabled = False
         self.homography_matrix = None
@@ -66,7 +216,8 @@ class CameraHandle:
         self.latest_processed_frame = None
         self.last_capture_time = 0.0
         
-        print(f"📷 Initializing camera {camera_id} with device {config['device_id']}")
+        device_display = config.get('device_id', 'unknown')
+        print(f"📷 Initializing camera {camera_id} with device {device_display}")
     
     def _setup_homography(self):
         """Setup homography transformation if enabled in config."""
@@ -163,8 +314,19 @@ class CameraHandle:
             if self.cap is not None:
                 self.cap.release()
             
+            # Resolve device identifier to OpenCV-compatible format
+            device_identifier = self.config['device_id']
+            try:
+                self.resolved_device_id = resolve_device_identifier(device_identifier)
+                print(f"📷 Resolved device '{device_identifier}' to ID: {self.resolved_device_id}")
+            except ValueError as e:
+                print(f"❌ Device resolution failed: {e}")
+                self.status.error_count += 1
+                self.status.last_error = str(e)
+                return False
+            
             # Create VideoCapture with platform-appropriate backend
-            device_id = self.config['device_id']
+            device_id = self.resolved_device_id
             
             # Choose backend based on platform
             system = platform.system().lower()
@@ -193,19 +355,25 @@ class CameraHandle:
             
             if not self.cap.isOpened():
                 self.status.error_count += 1
-                self.status.last_error = f"Failed to open camera device {device_id}"
+                self.status.last_error = f"Failed to open camera device {device_identifier} (resolved to {device_id})"
                 return False
             
-            # Configure camera properties
+            # IMPORTANT: Set FOURCC first for proper format negotiation
+            # This must be done before setting resolution/FPS on many cameras
+            fourcc = self._fourcc_from_string(self.config['fourcc'])
+            self.cap.set(cv2.CAP_PROP_FOURCC, fourcc)
+            
+            # Small delay to let format change take effect
+            time.sleep(0.1)
+            
+            # Now configure resolution and FPS
             width, height = self.config['resolution']
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-            self.cap.set(cv2.CAP_PROP_FPS, self.config['target_fps'])
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE, self.config['buffer_size'])
             
-            # Set FOURCC codec
-            fourcc = self._fourcc_from_string(self.config['fourcc'])
-            self.cap.set(cv2.CAP_PROP_FOURCC, fourcc)
+            # Set FPS last - some drivers need format and resolution set first
+            self.cap.set(cv2.CAP_PROP_FPS, self.config['target_fps'])
             
             # Set image adjustment properties
             if self.config['brightness'] != 0:
@@ -238,13 +406,22 @@ class CameraHandle:
             actual_width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
             actual_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
             actual_fps = self.cap.get(cv2.CAP_PROP_FPS)
+            actual_fourcc = self.cap.get(cv2.CAP_PROP_FOURCC)
+            
+            # Convert FOURCC code back to string for display
+            fourcc_str = "".join([chr((int(actual_fourcc) >> (8 * i)) & 0xFF) for i in range(4)])
             
             print(f"✅ Camera {self.camera_id} connected:")
+            print(f"   📱 Device: {device_identifier} → ID {self.resolved_device_id}")
             print(f"   📐 Resolution: {actual_width}x{actual_height} (requested: {width}x{height})")
             print(f"   🎞️ FPS: {actual_fps} (requested: {self.config['target_fps']})")
-            print(f"   🔧 FOURCC: {self.config['fourcc']}")
+            print(f"   🔧 FOURCC: {fourcc_str} (requested: {self.config['fourcc']})")
             print(f"   📦 Buffer size: {self.config['buffer_size']}")
             print(f"   🔍 Downsample: {self.downsample_factor}x")
+            
+            # FPS warning if significantly different
+            if actual_fps > 0 and abs(actual_fps - self.config['target_fps']) > 5:
+                print(f"   ⚠️ FPS mismatch! Check camera format support")
             
             self.status.connected = True
             self.status.error_count = 0
@@ -515,7 +692,7 @@ class CameraManager:
         """Load camera configuration from JSON file."""
         default_config = {
             "camera_1": {
-                "device_id": 0,
+                "device_id": 0,  # Can be int, string number, or device name like "usb-xhci-hcd.0-1"
                 "resolution": [640, 480],
                 "target_fps": 30,
                 "buffer_size": 1,
@@ -537,7 +714,7 @@ class CameraManager:
                 }
             },
             "camera_2": {
-                "device_id": 2,
+                "device_id": 2,  # Can be int, string number, or device name like "usb-xhci-hcd.0-1"
                 "resolution": [640, 480],
                 "target_fps": 30,
                 "buffer_size": 1,

@@ -1,0 +1,24 @@
+{
+  "model": {
+    "model_type": "yolo-world",
+    "model_file": "yolov8s-worldv2.pt",
+    "confidence_threshold": 0.1,
+    "classes": [
+      "plush toy"
+    ]
+  },
+  "processing": {
+    "input_width": 320,
+    "input_height": 160
+  },
+  "crop": {
+    "crop_top": 0,
+    "crop_bottom": 0,
+    "crop_left": 0,
+    "crop_right": 0
+  },
+  "detection": {
+    "detection_interval": 1.0,
+    "max_detections": 5
+  }
+}
