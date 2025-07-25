@@ -230,7 +230,6 @@ PiResponse PiComm::handleWristPositionCommand(const String& cmd) {
     return PiResponse(false, "Invalid wrist position format. Use PI:WP,position");
   }
   
-  // Temporarily disable wrist lock for manual control (will re-engage after 5 seconds)
   servos->temporarilyDisableWristLock(WRIST_DISABLE_TIME);
   servos->setTarget(IDX_WRIST, wristPos);
   
