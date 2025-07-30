@@ -58,8 +58,7 @@ private:
   void updateMotion();
   void applyWristLock();
   float convertToRightShoulderAngle(float left_angle);
-  void setShoulderTarget(float angle);
-  void setShoulderSpeed(float speed);
+
 
 
 public:
@@ -73,6 +72,10 @@ public:
   void stopAll();
   void resetPosition();
   void zeroAllServos();
+
+  //shoulder controls
+  void setShoulderTarget(float angle);
+  void setShoulderSpeed(float speed);
   
   // advanced control
   void setGlobalPosition(float x, float y);
