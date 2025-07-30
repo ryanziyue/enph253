@@ -19,7 +19,7 @@
 #define WRIST_LOWER_LIMIT    -45
 #define WRIST_UPPER_LIMIT     45
 
-#define SHOULDER_R_OFFSET   173.0
+#define SHOULDER_R_OFFSET    173.0 
 
 struct Point {
   float x, y;
@@ -37,8 +37,9 @@ private:
   float max_speed[NUM_SERVOS];
   float home_pos[NUM_SERVOS];
   
+  // shoulder servo calibration
   float shoulder_r_offset;
-
+  
   unsigned long last_millis;
   unsigned long last_ik_millis;
   
@@ -49,16 +50,15 @@ private:
   
   // wrist lock
   bool wrist_lock_enabled;
-  float wrist_lock_angle;  // Desired wrist angle relative to horizontal (0 = level)
-  unsigned long wrist_lock_disable_until;  // Timestamp when temporary disable expires
+  float wrist_lock_angle; 
+  unsigned long wrist_lock_disable_until; 
   
   bool initialized;
   
   // helper methods
   void updateMotion();
   void applyWristLock();
-  float convertToRightShoulderAngle(float left_angle);
-
+  float convertToRightShoulderAngle(float left_angle); 
 
 
 public:
@@ -72,23 +72,23 @@ public:
   void stopAll();
   void resetPosition();
   void zeroAllServos();
-
-  // shoulder controls
+  
+  // centralized shoulder control methods
   void setShoulderTarget(float angle);
   void setShoulderSpeed(float speed);
-
+  
   // shoulder calibration
   void setShoulderOffset(float offset); 
   float getShoulderOffset() const { return shoulder_r_offset; }
-  void recalculateHomePositions();
+  void recalculateHomePositions(); 
   
   // advanced control
   void setGlobalPosition(float x, float y);
   void setGlobalVelocity(float vx, float vy);
-  void setWristLock(bool enabled, float angle_degrees = 0);  // angle relative to horizontal
-  void setWristLockAngle(float angle_degrees);  // Just change the angle without toggling lock
-  float getWristLockAngle() const { return wrist_lock_angle; }  // Get current lock angle
-  void temporarilyDisableWristLock(int duration_ms = 5000);  // Temporarily disable for manual control
+  void setWristLock(bool enabled, float angle_degrees = 0);
+  void setWristLockAngle(float angle_degrees);
+  float getWristLockAngle() const { return wrist_lock_angle; }
+  void temporarilyDisableWristLock(int duration_ms = 5000);
   void setClaw(float angle);
   void setMaxSpeed(int idx, float maxSpeed);
   
