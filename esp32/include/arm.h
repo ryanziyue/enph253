@@ -1,14 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include "custom_servo.h"
-
-// servo pins
-#define NUM_SERVOS       5
-#define IDX_BASE         0
-#define IDX_SHOULDER_L   1
-#define IDX_SHOULDER_R   2
-#define IDX_ELBOW        3
-#define IDX_WRIST        4
+#include "main.h"
 
 // kinematics constants
 #define ARM_L1               19.6

@@ -56,6 +56,13 @@
 
 #define WRIST_DISABLE_TIME 5000
 
+// servo pins
+#define NUM_SERVOS       5
+#define IDX_BASE         0
+#define IDX_SHOULDER_L   1
+#define IDX_SHOULDER_R   2
+#define IDX_ELBOW        3
+#define IDX_WRIST        4
 
 // forward declarations
 class MotorController;
