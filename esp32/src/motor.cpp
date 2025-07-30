@@ -62,7 +62,6 @@ void MotorController::driveMotor(uint8_t chanFwd, uint8_t chanRev, int speed) {
 }
 
 void MotorController::setMotors(int left_speed, int right_speed) {
-  // Don't apply any additional constraints - let driveMotor handle it exactly like working code
   current_left_speed = left_speed;
   current_right_speed = right_speed;
   driveMotor(M1_CHAN_FWD, M1_CHAN_REV, left_speed);
