@@ -3,7 +3,8 @@
 
 ServoController::ServoController() : last_millis(0), last_ik_millis(0),
     ik_vel_enabled(false), ik_target_x(0), ik_target_y(0), ik_vx(0), ik_vy(0),
-    wrist_lock_enabled(true), wrist_lock_angle(0), wrist_lock_disable_until(0), initialized(false) {
+    wrist_lock_enabled(true), wrist_lock_angle(0), wrist_lock_disable_until(0), 
+    initialized(false), shoulder_r_offset(SHOULDER_R_OFFSET) {
   
   // set max speeds
   max_speed[IDX_BASE] = IDX_BASE_SPEED;
