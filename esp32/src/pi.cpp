@@ -53,9 +53,6 @@ PiResponse PiComm::processCommand(const String& cmd) {
   else if (cmd.startsWith("PI:WLA,")) {
     return handleWristLockAngle(cmd);
   }
-  else if (cmd.startsWith("PI:WLTD,")) {
-    return handleWristLockTempDisable(cmd);
-  }
   else if (cmd.startsWith("PI:SS,")) {
     return handleAllServoSpeedsCommand(cmd);
   }
@@ -237,7 +234,7 @@ PiResponse PiComm::handleServoPositionCommand(const String& cmd) {
   }
   if (parts[1] != "-") {
     int shoulderPos = parts[1].toInt();
-    servos->setTarget(IDX_SHOULDER_L, shoulderPos);  // This sets both shoulders
+    servos->setShoulderTarget(shoulderPos);  // Use centralized shoulder method directly
   }
   if (parts[2] != "-") {
     int elbowPos = parts[2].toInt();
@@ -255,10 +252,11 @@ PiResponse PiComm::handleWristPositionCommand(const String& cmd) {
     return PiResponse(false, "Invalid wrist position format. Use PI:WP,position");
   }
   
-  servos->temporarilyDisableWristLock(WRIST_DISABLE_TIME);
+  // Simply disable wrist lock for manual control
+  servos->setWristLock(false);
   servos->setTarget(IDX_WRIST, wristPos);
   
-  return PiResponse(true, "Wrist position set to " + String(wristPos) + "° (wrist lock will re-engage in 5s)");
+  return PiResponse(true, "Wrist position set to " + String(wristPos) + "° (wrist lock disabled)");
 }
 
 PiResponse PiComm::handleClawPositionCommand(const String& cmd) {
@@ -329,21 +327,6 @@ PiResponse PiComm::handleWristLockAngle(const String& cmd) {
   return PiResponse(true, "Wrist lock angle set to " + String(servos->getWristLockAngle()) + "°" + status);
 }
 
-PiResponse PiComm::handleWristLockTempDisable(const String& cmd) {
-  // parse: PI:WLTD,duration_ms
-  int duration = 5000;  // default 5 seconds
-  if (sscanf(cmd.c_str(), "PI:WLTD,%d", &duration) != 1) {
-    return PiResponse(false, "Invalid temp disable format. Use PI:WLTD,duration_ms");
-  }
-  
-  // Clamp duration to reasonable limits (100ms to 30 seconds)
-  duration = constrain(duration, 100, 30000);
-  
-  servos->temporarilyDisableWristLock(duration);
-  
-  return PiResponse(true, "Wrist lock temporarily disabled for " + String(duration) + "ms");
-}
-
 PiResponse PiComm::handleAllServoSpeedsCommand(const String& cmd) {
   // parse: PI:SS,base,shoulder,elbow,wrist
   String parts[4];
@@ -358,7 +341,7 @@ PiResponse PiComm::handleAllServoSpeedsCommand(const String& cmd) {
   }
   
   if (idx < 4) {
-    return PiResponse(false, "Invalid servo max speeds format. Use PI:SS,base,shoulder,elbow,wrist");
+    return PiResponse(false, "Invalid servo speeds format. Use PI:SS,base,shoulder,elbow,wrist");
   }
 
   // execute commands (skip if "-")
