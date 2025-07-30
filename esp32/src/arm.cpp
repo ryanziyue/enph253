@@ -185,8 +185,6 @@ void ServoController::updateMotion() {
 }
 
 float ServoController::convertToRightShoulderAngle(float left_angle) {
-  // Convert left shoulder angle to right shoulder angle
-  // The servos face opposite directions, so they need opposite rotations
   float right_angle = shoulder_r_offset - left_angle;
   return constrain(right_angle, 0, 180);
 }
@@ -447,7 +445,7 @@ void ServoController::applyWristLock() {
   target_pos[IDX_WRIST] = lockAng;
 }
 
-// kinematics - no changes needed here since it's based on joint-to-joint distances
+// kinematics
 Point ServoController::forwardKinematics(float theta1, float theta2) {
   float t1 = theta1 * DEG2RAD;
   float phi = (ELBOW_OFFSET - theta2) * DEG2RAD;
