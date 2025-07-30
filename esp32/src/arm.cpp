@@ -14,9 +14,21 @@ ServoController::ServoController() : last_millis(0), last_ik_millis(0),
   
   // set home positions
   for (int i = 0; i < NUM_SERVOS; i++) {
-    home_pos[i] = 90.0;
-    current_pos[i] = 90.0;
-    target_pos[i] = 90.0;
+    if (i == IDX_SHOULDER_L) {
+      home_pos[i] = 90.0;
+      current_pos[i] = 90.0;
+      target_pos[i] = 90.0;
+    } else if (i == IDX_SHOULDER_R) {
+      // Calculate right shoulder home position based on offset
+      float right_home = constrain(shoulder_r_offset - 90.0, 0, 180);
+      home_pos[i] = right_home;
+      current_pos[i] = right_home;
+      target_pos[i] = right_home;
+    } else {
+      home_pos[i] = 90.0;
+      current_pos[i] = 90.0;
+      target_pos[i] = 90.0;
+    }
     speed_cmd[i] = 0.0;
   }
 }
