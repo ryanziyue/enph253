@@ -54,8 +54,6 @@
 #define IDX_ELBOW_SPEED         60.0
 #define IDX_WRIST_SPEED         60.0
 
-#define WRIST_DISABLE_TIME      5000
-
 // servo pins
 #define NUM_SERVOS              5
 #define IDX_BASE                0
@@ -70,12 +68,12 @@
 #define ELBOW_OFFSET            10.0
 #define DEG2RAD                 (3.14159265/180.0)
 #define RAD2DEG                 (180.0/3.14159265)
-#define WRIST_LOWER_LIMIT       -45
-#define WRIST_UPPER_LIMIT        45
 
 // physical mounting offsets
 #define SHOULDER_R_OFFSET       173.0 
 #define WRIST_MOUNTING_OFFSET   120
+#define WRIST_LOWER_LIMIT       -60
+#define WRIST_UPPER_LIMIT        120
 
 // forward declarations
 class MotorController;
