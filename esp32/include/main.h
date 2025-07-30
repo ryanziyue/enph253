@@ -2,36 +2,36 @@
 #include <Arduino.h>
 
 // arm pins
-#define SERVO_BASE_PIN     14
-#define SERVO_SHOULDER_L   12
-#define SERVO_SHOULDER_R   13
-#define SERVO_ELBOW_PIN    33
-#define SERVO_WRIST_PIN    27
-#define SERVO_CLAW_PIN     15
+#define SERVO_BASE_PIN          14
+#define SERVO_SHOULDER_L        12
+#define SERVO_SHOULDER_R        13
+#define SERVO_ELBOW_PIN         33
+#define SERVO_WRIST_PIN         27
+#define SERVO_CLAW_PIN          15
 
 // limit switch
-#define LIMIT_SWITCH_PIN    7
+#define LIMIT_SWITCH_PIN        7
 
 // motor pins
-#define M1_PIN_FWD         20
-#define M1_CHAN_FWD         0
-#define M1_PIN_REV         21
-#define M1_CHAN_REV         1
+#define M1_PIN_FWD              20
+#define M1_CHAN_FWD             0
+#define M1_PIN_REV              21
+#define M1_CHAN_REV             1
 
-#define M2_PIN_FWD         19
-#define M2_CHAN_FWD         2
-#define M2_PIN_REV         22
-#define M2_CHAN_REV         3
+#define M2_PIN_FWD              19
+#define M2_CHAN_FWD             2
+#define M2_PIN_REV              22
+#define M2_CHAN_REV             3
 
 // reflectance sensor pins
-#define ANALOG_PIN_R1 37  // GPIO37 = ADC1_CHANNEL_1
-#define ANALOG_PIN_L1 38  // GPIO38 = ADC1_CHANNEL_2
-#define ANALOG_PIN_R2 34  // GPIO34 = ADC1_CHANNEL_6
-#define ANALOG_PIN_L2 35  // GPIO35 = ADC1_CHANNEL_7
+#define ANALOG_PIN_R1           37  // GPIO37 = ADC1_CHANNEL_1
+#define ANALOG_PIN_L1           38  // GPIO38 = ADC1_CHANNEL_2
+#define ANALOG_PIN_R2           34  // GPIO34 = ADC1_CHANNEL_6
+#define ANALOG_PIN_L2           35  // GPIO35 = ADC1_CHANNEL_7
 
 // pwm settings
-#define PWM_FREQ           1000
-#define PWM_RES_BITS       8
+#define PWM_FREQ                500
+#define PWM_RES_BITS            8
 
 // line following params
 #define K_P                     45.0
@@ -54,26 +54,28 @@
 #define IDX_ELBOW_SPEED         60.0
 #define IDX_WRIST_SPEED         60.0
 
-#define WRIST_DISABLE_TIME 5000
+#define WRIST_DISABLE_TIME      5000
 
 // servo pins
-#define NUM_SERVOS       5
-#define IDX_BASE         0
-#define IDX_SHOULDER_L   1
-#define IDX_SHOULDER_R   2
-#define IDX_ELBOW        3
-#define IDX_WRIST        4
+#define NUM_SERVOS              5
+#define IDX_BASE                0
+#define IDX_SHOULDER_L          1
+#define IDX_SHOULDER_R          2
+#define IDX_ELBOW               3
+#define IDX_WRIST               4
 
 // kinematics constants
-#define ARM_L1               19.6
-#define ARM_L2               15.8
-#define ELBOW_OFFSET         10.0
-#define DEG2RAD              (3.14159265/180.0)
-#define RAD2DEG              (180.0/3.14159265)
-#define WRIST_LOWER_LIMIT    -45
-#define WRIST_UPPER_LIMIT     45
+#define ARM_L1                  19.6
+#define ARM_L2                  15.8
+#define ELBOW_OFFSET            10.0
+#define DEG2RAD                 (3.14159265/180.0)
+#define RAD2DEG                 (180.0/3.14159265)
+#define WRIST_LOWER_LIMIT       -45
+#define WRIST_UPPER_LIMIT        45
 
-#define SHOULDER_R_OFFSET    173.0 
+// physical mounting offsets
+#define SHOULDER_R_OFFSET       173.0 
+#define WRIST_MOUNTING_OFFSET   120
 
 // forward declarations
 class MotorController;
@@ -82,6 +84,6 @@ class PiComm;
 struct PiCommand;
 
 // function declarations
-void handlePiCommand(const PiCommand& cmd);
+void handleLocalCommand(String cmd);
 void printSystemStatus();
 void emergencyStop();
