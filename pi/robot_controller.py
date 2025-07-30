@@ -46,7 +46,7 @@ class RobotController:
         print("🤖 Initializing Robot Controller...")
         
         # Camera manager
-        self.camera_manager = CameraManager(config_file)
+        self.camera_manager = CameraManager()
         
         # Line following managers for both cameras
         self.line_manager_1: Optional[LineFollowingManager] = None
@@ -186,15 +186,18 @@ class RobotController:
         # self.sweep_thread = threading.Thread(target=self.servo_sweep, daemon=True)
         # self.sweep_thread.start()
 
-        while(self.running):
-            if self.object_detection_manager:
-                self._process_object_detection()
-
         self.motors.set_line_following_mode(LineFollowingMode.REFLECTANCE)
         self.arm.set_wrist_angle(5)
         self.arm.set_claw_angle(90)
         self.motors.set_motor_speeds(0,0)
-        self.neutral_pos()
+        self.arm.set_arm_angles(90, 150, 165, wait_for_ack=True, timeout=1)
+
+        input("Test cam")
+        while(self.running):
+            if self.object_detection_manager:
+                result = self.object_detection_manager.run_detection_blocking()
+                if result.found:
+                    print("Object found")
 
         input("Enter to start")
 
@@ -280,17 +283,22 @@ class RobotController:
         
     def main_control(self):
         # STEP 1: Move forward until the first curve
-        self.motors.set_base_speed(190)
-        self.motors.set_min_speed(175)
-        self.line_follow_time(1.5, stop=False)
-
-        self.motors.set_base_speed(165)
-        self.motors.set_min_speed(150)
-        # 1st and 2nd turn: CT=7, MT=20, AV=3
-        self.line_follow_until_curve(curve_threshold=7, max_threshold=20, averaging_window=3)
-        self.motors.set_motor_speeds_raw(180,180)
-        time.sleep(0.25)
-        self.motors.stop_motors()
+        # self.motors.set_base_speed(170)
+        # self.motors.set_min_speed(160)
+        # self.line_follow_time(1.5, stop=False)
+        
+        # self.motors.set_base_speed(170)
+        # self.motors.set_min_speed(160)
+        # # 1st and 2nd turn: CT=7, MT=20, AV=3
+        # self.line_follow_until_curve(curve_threshold=7, max_threshold=20, averaging_window=3, stop=True)
+        # print("Curve detected")
+        # time.sleep(1)
+        # self.motors.set_base_speed(190)
+        # self.motors.set_min_speed(175)
+        # self.line_follow_time(0.75)
+        # self.motors.set_motor_speeds_raw(180,180)
+        # time.sleep(0.25)
+        # self.motors.stop_motors()
         
         # STEP 2: Pick up the pet
         input("Enter to start step 2")
@@ -301,11 +309,15 @@ class RobotController:
         # self.locate_pet(60,90,45,arm_pos,5, 0.2, 280)
         self.locate_pet_discrete([55,65,75],arm_pos)
 
-        grab_pos = [15+11,-6,0]
+        grab_pos = [15+11,-8,0]
         self.grab_pet_direct(grab_pos)
         time.sleep(1)
 
-        self.neutral_pos()
+        self.arm.set_wrist_angle(180)
+        self.arm.set_arm_angles(elbow=0,wait_for_ack=True,timeout=0.5)
+        self.arm.set_arm_angles(shoulder=100, wait_for_ack=True,timeout=2)
+        self.arm.set_turret_angle(90)
+        self.arm.set_arm_angles(elbow=20, wait_for_ack=True,timeout=2)
         
         # self.arm.set_wrist_angle_unlock(180)
         # self.arm.set_arm_angles(elbow=0,wait_for_ack=True,timeout=0.5)
@@ -381,7 +393,8 @@ class RobotController:
         self.neutral_pos()
 
     def neutral_pos(self):
-        self.arm.set_arm_angles(90, 100, 120, wait_for_ack=True, timeout=1)
+        self.arm.set_arm_angles(90, None, 120, wait_for_ack=True, timeout=1)
+        self.arm.set_arm_angles(90, 150, 120, wait_for_ack=True, timeout=1)
         self.arm.set_arm_angles(90, 150, 165, wait_for_ack=True, timeout=1)
 
     def drop_into_basket(self):
@@ -395,8 +408,8 @@ class RobotController:
         self.arm.set_arm_angles(90, 90, 0, wait_for_ack=True, timeout=1)
         self.arm.set_wrist_angle(90)
         self.arm.set_turret_angle(180, wait_for_ack=True, timeout=1)
-        self.arm.set_wrist_angle(50)
-        self.arm.set_arm_angles(elbow=20, wait_for_ack=True, timeout=1)
+        self.arm.set_wrist_angle(30)
+        self.arm.set_arm_angles(elbow=50, wait_for_ack=True, timeout=1.5)
         self.arm.set_claw_angle(90)
         time.sleep(0.25)
         self.arm.set_turret_angle(90)
@@ -675,9 +688,7 @@ class RobotController:
                     self.arm.set_turret_angle(current_angle)
             
             time.sleep(0.1)
-
-        return self.predict_object_distance(result.bbox, 8, frame_width=320)
-    
+ 
     def _calculate_angle_correction(self, bbox, camera_fov_degrees):
         """
         Calculate angle correction needed to center pet in frame.
@@ -875,7 +886,6 @@ class RobotController:
 
         self.arm.set_claw_angle(0)
         
-    
     def get_barrier_data(self):
         """
         Get current barrier detection data.
@@ -1054,125 +1064,6 @@ class RobotController:
         except Exception as e:
             print(f"❌ Arm test error: {e}")
             return False
-    
-    def test_angle_correction(self):
-        """
-        Test the _calculate_angle_correction function with different bounding box values.
-        This lets you verify the angle calculation logic independently.
-        """
-        print("🧪 Testing Angle Correction Function")
-        print("=" * 50)
-        
-        # Get current camera frame dimensions from camera manager if available
-        actual_frame_width = 640  # Default
-        if self.camera_manager:
-            try:
-                # Try to get actual frame dimensions
-                frame = self.camera_manager.get_frame(2)  # Object detection camera
-                if frame is not None:
-                    actual_frame_width = frame.shape[1]
-                    print(f"📐 Actual frame width: {actual_frame_width} pixels")
-            except:
-                pass
-        
-        # Default test parameters
-        default_fov = 70  # degrees
-        
-        print(f"📐 Current settings:")
-        print(f"   Frame width: 320 pixels (hardcoded in function)")
-        print(f"   Actual frame width: {actual_frame_width} pixels")
-        print(f"   Camera FOV: {default_fov}° (default)")
-        print(f"   Frame center: {320/2} pixels")
-        
-        print(f"\n🧪 Test Cases:")
-        print(f"   Bbox format: [x1, y1, x2, y2]")
-        print(f"   Positive angle = turn right, Negative = turn left")
-        
-        # Test cases: [x1, y1, x2, y2, description]
-        test_cases = [
-            # [x1, y1, x2, y2, description]
-            [140, 100, 180, 150, "Centered object (should be ~0°)"],
-            [200, 100, 240, 150, "Object to the right"],
-            [80, 100, 120, 150, "Object to the left"],
-            [0, 100, 40, 150, "Object far left"],
-            [280, 100, 320, 150, "Object far right"],
-            [100, 100, 220, 150, "Wide object centered"],
-            [240, 100, 280, 150, "Small object right side"],
-            [40, 100, 80, 150, "Small object left side"],
-        ]
-        
-        print(f"\n📊 Test Results:")
-        print(f"{'Bbox':<25} {'Pet Center':<12} {'Frame Center':<13} {'Offset':<8} {'Angle':<8} {'Description'}")
-        print("-" * 90)
-        
-        for i, (x1, y1, x2, y2, description) in enumerate(test_cases):
-            bbox = [x1, y1, x2, y2]
-            
-            # Calculate using the actual function
-            angle_correction = self._calculate_angle_correction(bbox, default_fov)
-            
-            # Calculate components manually for display
-            pet_center_x = (x1 + x2) / 2
-            frame_center_x = 320 / 2
-            pixel_offset = pet_center_x - frame_center_x
-            
-            print(f"{str(bbox):<25} {pet_center_x:<12.1f} {frame_center_x:<13.1f} {pixel_offset:<8.1f} {angle_correction:<8.1f} {description}")
-        
-        print(f"\n🔍 Interactive Test:")
-        while True:
-            try:
-                print(f"\nEnter bounding box coordinates (or 'q' to quit):")
-                user_input = input("Format: x1,y1,x2,y2 (e.g., 140,100,180,150): ").strip()
-                
-                if user_input.lower() == 'q':
-                    break
-                
-                # Parse input
-                coords = [float(x.strip()) for x in user_input.split(',')]
-                if len(coords) != 4:
-                    print("❌ Please provide exactly 4 coordinates")
-                    continue
-                
-                x1, y1, x2, y2 = coords
-                bbox = [x1, y1, x2, y2]
-                
-                # Optional: allow custom FOV
-                fov_input = input(f"Camera FOV in degrees (default {default_fov}): ").strip()
-                fov = float(fov_input) if fov_input else default_fov
-                
-                # Calculate angle correction
-                angle_correction = self._calculate_angle_correction(bbox, fov)
-                
-                # Show detailed calculation
-                pet_center_x = (x1 + x2) / 2
-                frame_center_x = 320 / 2
-                pixel_offset = pet_center_x - frame_center_x
-                pixels_per_degree = 320 / fov
-                
-                print(f"\n📊 Calculation Details:")
-                print(f"   Pet center X: {pet_center_x:.1f} pixels")
-                print(f"   Frame center X: {frame_center_x:.1f} pixels")
-                print(f"   Pixel offset: {pixel_offset:.1f} pixels")
-                print(f"   Pixels per degree: {pixels_per_degree:.2f}")
-                print(f"   Raw angle: {pixel_offset / pixels_per_degree:.2f}°")
-                print(f"   Final angle correction: {angle_correction:.2f}°")
-                print(f"   Direction: {'Turn RIGHT' if angle_correction > 0 else 'Turn LEFT' if angle_correction < 0 else 'Already centered'}")
-                
-                # Show what this means for turret movement
-                print(f"\n🔄 Turret Movement:")
-                if abs(angle_correction) < 1.0:
-                    print(f"   ✅ Pet is well centered (±1°)")
-                elif abs(angle_correction) < 5.0:
-                    print(f"   ⚠️ Small adjustment needed: {abs(angle_correction):.1f}°")
-                else:
-                    print(f"   🔄 Large adjustment needed: {abs(angle_correction):.1f}°")
-                
-            except ValueError:
-                print("❌ Invalid input format. Use: x1,y1,x2,y2")
-            except Exception as e:
-                print(f"❌ Error: {e}")
-        
-        print(f"\n✅ Angle correction test complete")
 
     def _process_line_following(self):
         """Process line following and compute statistics."""

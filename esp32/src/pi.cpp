@@ -62,6 +62,9 @@ PiResponse PiComm::processCommand(const String& cmd) {
   else if (cmd.startsWith("PI:SMS,")) {
     return handleAllServoMaxSpeedsCommand(cmd);
   }
+  else if (cmd.startsWith("PI:REF")) {
+    return handleReflectanceDataCommand(cmd);
+  }
   else if (cmd.equals("PI:STATUS")) {
     return handleStatusRequest(cmd);
   }
@@ -184,6 +187,28 @@ PiResponse PiComm::handleMinSpeed(const String& cmd) {
   motors->setMinSpeed(speed);
 
   return PiResponse(true, "Min speed set to " + String(speed));
+}
+
+PiResponse PiComm::handleReflectanceDataCommand(const String& cmd) {
+
+  lineFollower->updateSensors();
+
+  float voltageR1 = lineFollower->getSensorVoltage(0);
+  float voltageL1 = lineFollower->getSensorVoltage(1);
+  float voltageR2 = lineFollower->getSensorVoltage(2);
+  float voltageL2 = lineFollower->getSensorVoltage(3);
+
+  String s;
+  s.reserve(32);
+
+  s  = "ESP:RF,"
+    + String(voltageR1, 3) + ','
+    + String(voltageL1, 3) + ','
+    + String(voltageR2, 3) + ','
+    + String(voltageL2, 3);
+
+  return PiResponse(true, s);
+  
 }
 
 // ------- ARM CONTROL COMMANDS ------- 

@@ -55,7 +55,7 @@ void MotorController::driveMotor(uint8_t chanFwd, uint8_t chanRev, int speed) {
     if (speed > -minSpeed) {
       speed = minSpeed;  // This is the "bug" - should be -minSpeed but working code has minSpeed!
     }
-    ledcWrite(chanRev, -speed);
+    ledcWrite(chanRev, std::abs(speed));
   } else {
     stopMotor(chanFwd, chanRev);
   }

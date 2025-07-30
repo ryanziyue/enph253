@@ -33,6 +33,7 @@ private:
   PiResponse handleLineFollowToggle(const String& cmd);             // PI:LF,x
   PiResponse handleBaseSpeed(const String& cmd);                    // PI:LBS,x
   PiResponse handleMinSpeed(const String& cmd);                     // PI:LMS,x
+  PiResponse handleReflectanceDataCommand(const String& cmd);
   
   // command parsing helpers - ARM CONTROL
   PiResponse handleServoPositionCommand(const String& cmd);         // PI:SP,a,b,c
