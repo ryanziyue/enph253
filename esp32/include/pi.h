@@ -41,7 +41,6 @@ private:
   PiResponse handleGlobalVelocityCommand(const String& cmd);        // PI:GV,x,y
   PiResponse handleWristLockToggle(const String& cmd);              // PI:WLT,1/0
   PiResponse handleWristLockAngle(const String& cmd);               // PI:WLA,angle
-  PiResponse handleWristLockTempDisable(const String& cmd);         // PI:WLTD,duration_ms
   PiResponse handleAllServoSpeedsCommand(const String& cmd);        // PI:SS,base,shoulder,elbow,wrist
   PiResponse handleAllServoMaxSpeedsCommand(const String& cmd);     // PI:SMS,base,shoulder,elbow,wrist
   
