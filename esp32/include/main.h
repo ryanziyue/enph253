@@ -54,6 +54,9 @@
 #define IDX_ELBOW_SPEED         60.0
 #define IDX_WRIST_SPEED         60.0
 
+#define WRIST_DISABLE_TIME 5000
+
+
 // forward declarations
 class MotorController;
 class ServoController;

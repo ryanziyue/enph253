@@ -4,8 +4,6 @@
 #include "arm.h"
 #include "linefollower.h"
 
-#define WRIST_DISABLE_TIME 5000
-
 // response structure for pi commands
 struct PiResponse {
   bool success;
