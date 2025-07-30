@@ -19,6 +19,8 @@
 #define WRIST_LOWER_LIMIT    -45
 #define WRIST_UPPER_LIMIT     45
 
+#define SHOULDER_R_OFFSET   173.0
+
 struct Point {
   float x, y;
   Point(float x = 0, float y = 0) : x(x), y(y) {}
