@@ -73,9 +73,14 @@ public:
   void resetPosition();
   void zeroAllServos();
 
-  //shoulder controls
+  // shoulder controls
   void setShoulderTarget(float angle);
   void setShoulderSpeed(float speed);
+
+  // shoulder calibration
+  void setShoulderOffset(float offset); 
+  float getShoulderOffset() const { return shoulder_r_offset; }
+  void recalculateHomePositions();
   
   // advanced control
   void setGlobalPosition(float x, float y);
