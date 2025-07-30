@@ -57,6 +57,7 @@ private:
   // helper methods
   void updateMotion();
   void applyWristLock();
+  float convertToRightShoulderAngle(float left_angle);
   void setShoulderTarget(float angle);
   void setShoulderSpeed(float speed);
 
