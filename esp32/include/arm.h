@@ -37,6 +37,8 @@ private:
   float max_speed[NUM_SERVOS];
   float home_pos[NUM_SERVOS];
   
+  float shoulder_r_offset;
+
   unsigned long last_millis;
   unsigned long last_ik_millis;
   
