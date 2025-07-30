@@ -370,8 +370,7 @@ PiResponse PiComm::handleAllServoSpeedsCommand(const String& cmd) {
   if (parts[1] != "-") {
     parts[1].trim();
     float shoulderSpeed = parts[1].toFloat();
-    servos->setSpeed(IDX_SHOULDER_L, shoulderSpeed);
-    servos->setSpeed(IDX_SHOULDER_R, shoulderSpeed);
+    servos->setShoulderSpeed(shoulderSpeed);
   }
   if (parts[2] != "-") {
     parts[2].trim();
