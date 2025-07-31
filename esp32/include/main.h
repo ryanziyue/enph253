@@ -9,9 +9,6 @@
 #define SERVO_WRIST_PIN         27
 #define SERVO_CLAW_PIN          15
 
-// limit switch
-#define LIMIT_SWITCH_PIN        7
-
 // motor pins
 #define M1_PIN_FWD              20
 #define M1_CHAN_FWD             0
@@ -73,8 +70,8 @@
 #define SHOULDER_R_OFFSET       174.0 
 #define WRIST_LOWER_LIMIT       -75
 #define WRIST_UPPER_LIMIT       105
-#define WRIST_SERVO_ALIGNED     75      // Servo angle when aligned with second arm
-#define BASE_SERVO_OFFSET       10    // Base servo offset from 0°
+#define WRIST_SERVO_ALIGNED     75      // servo angle when aligned with second arm
+#define BASE_SERVO_OFFSET       10    // base servo offset from 0deg
 
 
 // forward declarations
