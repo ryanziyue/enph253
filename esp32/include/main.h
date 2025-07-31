@@ -70,7 +70,7 @@
 #define SHOULDER_R_OFFSET       174.0 
 #define WRIST_LOWER_LIMIT       -75
 #define WRIST_UPPER_LIMIT       105
-#define WRIST_SERVO_ALIGNED     75 - 22      // servo angle when aligned with second arm
+#define WRIST_SERVO_ALIGNED     75 + 22      // servo angle when aligned with second arm
 #define BASE_SERVO_OFFSET       10    // base servo offset from 0deg
 
 
