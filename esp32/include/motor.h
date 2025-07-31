@@ -14,25 +14,23 @@ public:
   MotorController();
   void init();
   
-  // Basic motor control
+  // basic motor control
   void stopMotor(uint8_t chanFwd, uint8_t chanRev);
   void driveMotor(uint8_t chanFwd, uint8_t chanRev, int speed);
-  void setMotors(int left_speed, int right_speed);  // Now enforces min/max speeds
+  void setMotors(int left_speed, int right_speed);
   void stop();
   
-  // Speed constraint methods - new functionality
+  // speed constraint methods
   void setMinSpeed(int min);
   void setMaxSpeed(int max);
   int getMinSpeed() const { return minSpeed; }
   int getMaxSpeed() const { return maxSpeed; }
   
-  // Status
+  // status
   bool isMoving() const;
   int getLeftSpeed() const { return current_left_speed; }
   int getRightSpeed() const { return current_right_speed; }
   
-  // Debug
+  // debug
   void printStatus();
-  
-  // Note: All sensor methods removed - now handled by LineFollower
 };
