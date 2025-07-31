@@ -67,6 +67,9 @@ public:
   Point forwardKinematics(float theta1, float theta2);
   bool inverseKinematics(float x, float y, float &theta1, float &theta2);
   
+  void setBaseTarget(float user_angle);  // NEW: Base with offset compensation
+  void diagnoseWristIssue();   
+
   // status queries
   Point getCurrentPosition();
   bool isMoving() const;
