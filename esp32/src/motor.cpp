@@ -12,7 +12,7 @@ void MotorController::init() {
   ledcSetup(2, PWM_FREQ, PWM_RES_BITS);
   ledcSetup(3, PWM_FREQ, PWM_RES_BITS);
   
-  // Attach pins to PWM
+  // attach pins 
   ledcAttachPin(M1_PIN_FWD, 0);
   ledcAttachPin(M1_PIN_REV, 1);
   ledcAttachPin(M2_PIN_FWD, 2);
@@ -34,12 +34,11 @@ void MotorController::stopMotor(uint8_t chanFwd, uint8_t chanRev) {
   ledcWrite(chanRev, 0);
 }
 
-// EXACTLY match working code's driveMotor logic including the "bug"
 void MotorController::driveMotor(uint8_t chanFwd, uint8_t chanRev, int speed) {
-  // Constrain speed to -255 to 255 - exactly like working code
   if (speed > 255) {
     speed = 255;
-  } else if (speed < -255) {
+  }
+  else if (speed < -255) {
     speed = -255;
   }
 
@@ -49,14 +48,15 @@ void MotorController::driveMotor(uint8_t chanFwd, uint8_t chanRev, int speed) {
       speed = minSpeed;
     }
     ledcWrite(chanFwd, speed);
-  } else if (speed < 0) {
+  }
+  else if (speed < 0) {
     ledcWrite(chanFwd, 0);
-    // CRITICAL: Keep the "bug" from working code that makes it work!
     if (speed > -minSpeed) {
-      speed = minSpeed;  // This is the "bug" - should be -minSpeed but working code has minSpeed!
+      speed = minSpeed; 
     }
     ledcWrite(chanRev, std::abs(speed));
-  } else {
+  }
+  else {
     stopMotor(chanFwd, chanRev);
   }
 }
@@ -84,7 +84,7 @@ void MotorController::printStatus() {
   Serial.print("Initialized: "); Serial.println(initialized ? "Yes" : "No");
   Serial.print("Left Speed: "); Serial.println(current_left_speed);
   Serial.print("Right Speed: "); Serial.println(current_right_speed);
-  Serial.print("Speed Limits: Min="); Serial.print(minSpeed);
-  Serial.print(" Max="); Serial.println(maxSpeed);
+  Serial.print("Speed Limits: Min ="); Serial.print(minSpeed);
+  Serial.print(" Max ="); Serial.println(maxSpeed);
   Serial.print("Moving: "); Serial.println(isMoving() ? "Yes" : "No");
 }
