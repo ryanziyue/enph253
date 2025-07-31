@@ -252,7 +252,7 @@ PiResponse PiComm::handleWristPositionCommand(const String& cmd) {
     return PiResponse(false, "Invalid wrist position format. Use PI:WP,position");
   }
   
-  // Simply disable wrist lock for manual control
+  // simply disable wrist lock for manual control
   servos->setWristLock(false);
   servos->setTarget(IDX_WRIST, wristPos);
   
@@ -453,10 +453,6 @@ void PiComm::sendPositionUpdate() {
   Point pos = servos->getCurrentPosition();
   String posData = "ESP:" + String(pos.x, 2) + "," + String(pos.y, 2);
   Serial.println(posData);
-}
-
-void PiComm::sendLimitSwitchPressed() {
-  Serial.println("ESP:LS");
 }
 
 bool PiComm::isValidCommand(const String& cmd) {
