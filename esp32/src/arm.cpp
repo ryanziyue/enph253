@@ -12,9 +12,17 @@ ServoController::ServoController() : last_millis(0), last_ik_millis(0),
   max_speed[IDX_ELBOW] = IDX_ELBOW_SPEED;
   max_speed[IDX_WRIST] = IDX_WRIST_SPEED; 
   
-  // set home positions - account for fixed shoulder offset
+  // set home positions - account for fixed shoulder offset and base offset
   for (int i = 0; i < NUM_SERVOS; i++) {
-    if (i == IDX_SHOULDER_L) {
+    if (i == IDX_BASE) {
+      // Base home position: user angle 90° maps to servo angle 100°
+      float home_user_angle = 90.0;
+      float home_servo_angle = map(home_user_angle, 0, 180, BASE_SERVO_OFFSET, 180 - BASE_SERVO_OFFSET);
+      home_pos[i] = home_servo_angle;
+      current_pos[i] = home_servo_angle;
+      target_pos[i] = home_servo_angle;
+    }
+    else if (i == IDX_SHOULDER_L) {
       float desired_home = 90.0;
       if (desired_home > SHOULDER_R_OFFSET) {
         desired_home = SHOULDER_R_OFFSET;
@@ -23,14 +31,12 @@ ServoController::ServoController() : last_millis(0), last_ik_millis(0),
       current_pos[i] = desired_home;
       target_pos[i] = desired_home;
     }
-    
     else if (i == IDX_SHOULDER_R) {
       float right_home = constrain(SHOULDER_R_OFFSET - home_pos[IDX_SHOULDER_L], 0, 180);
       home_pos[i] = right_home;
       current_pos[i] = right_home;
       target_pos[i] = right_home;
     }
-    
     else {
       home_pos[i] = 90.0;
       current_pos[i] = 90.0;
@@ -57,7 +63,7 @@ void ServoController::init() {
       Serial.println(i);
       return;
     }
-    // Write the correct position accounting for shoulder offset
+    // Write the correct position
     servos[i].write(current_pos[i]);
     delay(100);  // small delay between servo initializations
   }
@@ -78,9 +84,12 @@ void ServoController::init() {
   ik_target_y = W.y;
   
   initialized = true;
-  Serial.println("Servo controller initialized with opposite-facing shoulder servos");
-  Serial.print("Fixed shoulder offset: "); Serial.println(SHOULDER_R_OFFSET);
-  Serial.println("Wrist lock enabled by default at 0° (level with ground)");
+  Serial.println("Servo controller initialized with EXACT working kinematics pattern");
+  Serial.print("Arm geometry: L1="); Serial.print(ARM_L1); 
+  Serial.print("cm L2="); Serial.print(ARM_L2); 
+  Serial.print("cm ELBOW_OFFSET="); Serial.print(ELBOW_OFFSET); Serial.println("°");
+  Serial.print("Max reach: "); Serial.print(ARM_L1 + ARM_L2);
+  Serial.print("cm Min reach: "); Serial.println(fabs(ARM_L1 - ARM_L2));
 }
 
 void ServoController::update() {
@@ -101,16 +110,27 @@ void ServoController::update() {
       float th1, th2;
       if (inverseKinematics(ik_target_x, ik_target_y, th1, th2)) {
         // Check shoulder constraint for IK velocity mode
-        if (th1 > SHOULDER_R_OFFSET) {
+        if (th1 > SHOULDER_R_OFFSET || th1 < 0) {
           // Hit constraint - stop velocity mode
           ik_vel_enabled = false;
           stopAll();
           Serial.print("IK velocity stopped - shoulder constraint reached (");
-          Serial.print(th1); Serial.print("° > "); Serial.print(SHOULDER_R_OFFSET); Serial.println("°)");
+          Serial.print(th1); Serial.print("° not in range 0-"); Serial.print(SHOULDER_R_OFFSET); Serial.println("°)");
           return;
         }
         
+        // Convert IK result to servo angle - EXACT working pattern
         float servo2 = ELBOW_OFFSET - th2;
+        
+        // Check elbow servo constraint
+        if (servo2 < 0 || servo2 > 180) {
+          ik_vel_enabled = false;
+          stopAll();
+          Serial.print("IK velocity stopped - elbow servo constraint reached (");
+          Serial.print(servo2); Serial.println("° not in range 0-180°)");
+          return;
+        }
+        
         setShoulderTarget(th1);  // Use centralized method
         setTarget(IDX_ELBOW, servo2);
       } else {
@@ -166,9 +186,22 @@ void ServoController::updateMotion() {
     if (fabs(speed_cmd[i]) > 1e-3) {
       target_pos[i] += speed_cmd[i] * dt;
       
-      // standard constraint for non-shoulder servos
-      if (target_pos[i] < 0) { target_pos[i] = 0; speed_cmd[i] = 0; }
-      else if (target_pos[i] > 180) { target_pos[i] = 180; speed_cmd[i] = 0; }
+      // Apply constraints based on servo type
+      if (i == IDX_BASE) {
+        // Base servo constraints with offset
+        if (target_pos[i] < BASE_SERVO_OFFSET) { 
+          target_pos[i] = BASE_SERVO_OFFSET; 
+          speed_cmd[i] = 0; 
+        }
+        else if (target_pos[i] > (180 - BASE_SERVO_OFFSET)) { 
+          target_pos[i] = 180 - BASE_SERVO_OFFSET; 
+          speed_cmd[i] = 0; 
+        }
+      } else {
+        // Standard constraint for other servos
+        if (target_pos[i] < 0) { target_pos[i] = 0; speed_cmd[i] = 0; }
+        else if (target_pos[i] > 180) { target_pos[i] = 180; speed_cmd[i] = 0; }
+      }
     }
     
     // slew toward target for all servos
@@ -211,10 +244,31 @@ void ServoController::setShoulderSpeed(float speed) {
   speed_cmd[IDX_SHOULDER_R] = -speed;
 }
 
+// Base target with offset compensation
+void ServoController::setBaseTarget(float user_angle) {
+  if (!initialized) return;
+  
+  // Map user angle (0-180, perpendicular at 90°) to servo angle (10-170, perpendicular at 100°)
+  float servo_angle = map(user_angle, 0, 180, BASE_SERVO_OFFSET, 180 - BASE_SERVO_OFFSET);
+  servo_angle = constrain(servo_angle, BASE_SERVO_OFFSET, 180 - BASE_SERVO_OFFSET);
+  
+  target_pos[IDX_BASE] = servo_angle;
+  
+  Serial.print("Base target: user="); Serial.print(user_angle);
+  Serial.print("° → servo="); Serial.print(servo_angle); 
+  if (user_angle == 90.0) Serial.print("° [PERPENDICULAR]");
+  Serial.println("°");
+}
+
 void ServoController::setTarget(int idx, float angle) {
   if (!initialized) return;
   
-  if (idx == IDX_SHOULDER_L || idx == IDX_SHOULDER_R) {
+  if (idx == IDX_BASE) {
+    // For base servo, use the offset compensation method
+    Serial.println("Note: Use setBaseTarget() for proper base offset compensation");
+    // Fall through to allow direct control if needed
+  }
+  else if (idx == IDX_SHOULDER_L || idx == IDX_SHOULDER_R) {
     // For shoulder servos, always use the centralized method
     if (idx == IDX_SHOULDER_L) {
       setShoulderTarget(angle);
@@ -224,8 +278,15 @@ void ServoController::setTarget(int idx, float angle) {
       left_angle = constrain(left_angle, 0, SHOULDER_R_OFFSET);  // Apply constraint
       setShoulderTarget(left_angle);
     }
-  } else if (idx >= 0 && idx < NUM_SERVOS) {
-    angle = constrain(angle, 0, 180);
+    return;
+  }
+  
+  if (idx >= 0 && idx < NUM_SERVOS) {
+    if (idx == IDX_BASE) {
+      angle = constrain(angle, BASE_SERVO_OFFSET, 180 - BASE_SERVO_OFFSET);
+    } else {
+      angle = constrain(angle, 0, 180);
+    }
     target_pos[idx] = angle;
   }
 }
@@ -250,9 +311,13 @@ void ServoController::resetPosition() {
   // Use centralized shoulder method for reset to ensure proper coordination
   setShoulderTarget(home_pos[IDX_SHOULDER_L]);  // This will set both shoulders correctly
   
+  // Set base using offset compensation
+  float base_user_angle = map(home_pos[IDX_BASE], BASE_SERVO_OFFSET, 180 - BASE_SERVO_OFFSET, 0, 180);
+  setBaseTarget(base_user_angle);
+  
   // Set other servos directly
   for (int i = 0; i < NUM_SERVOS; i++) {
-    if (i != IDX_SHOULDER_L && i != IDX_SHOULDER_R) {
+    if (i != IDX_SHOULDER_L && i != IDX_SHOULDER_R && i != IDX_BASE) {
       target_pos[i] = home_pos[i];
     }
     speed_cmd[i] = 0;
@@ -264,12 +329,19 @@ void ServoController::zeroAllServos() {
   
   Serial.println("Zeroing all servos...");
   
+  // For base servo, use minimum position (which is BASE_SERVO_OFFSET)
+  target_pos[IDX_BASE] = BASE_SERVO_OFFSET;
+  current_pos[IDX_BASE] = BASE_SERVO_OFFSET;
+  speed_cmd[IDX_BASE] = 0.0;
+  servos[IDX_BASE].write(BASE_SERVO_OFFSET);
+  delay(100);
+  
   // For shoulder servos, use centralized method
   setShoulderTarget(0.0);
   
   // For other servos, set directly
   for (int i = 0; i < NUM_SERVOS; i++) {
-    if (i != IDX_SHOULDER_L && i != IDX_SHOULDER_R) {
+    if (i != IDX_SHOULDER_L && i != IDX_SHOULDER_R && i != IDX_BASE) {
       target_pos[i] = 0.0;
       current_pos[i] = 0.0;
       speed_cmd[i] = 0.0;
@@ -306,18 +378,30 @@ void ServoController::setGlobalPosition(float x, float y) {
   float th1, th2;
   if (inverseKinematics(x, y, th1, th2)) {
     // Check if shoulder angle is within constraints
-    if (th1 > SHOULDER_R_OFFSET) {
-      Serial.print("Warning: IK solution ("); Serial.print(th1);
-      Serial.print("°) exceeds shoulder constraint ("); Serial.print(SHOULDER_R_OFFSET);
+    if (th1 > SHOULDER_R_OFFSET || th1 < 0) {
+      Serial.print("Warning: IK solution shoulder angle ("); Serial.print(th1);
+      Serial.print("°) outside constraint range (0-"); Serial.print(SHOULDER_R_OFFSET);
       Serial.println("°) - target clamped");
-      th1 = SHOULDER_R_OFFSET;
+      th1 = constrain(th1, 0, SHOULDER_R_OFFSET);
     }
     
+    // Convert IK result to servo angle - EXACT working pattern
     float servo2 = ELBOW_OFFSET - th2;
-    setShoulderTarget(th1);  // Use centralized method (will apply constraint)
+    
+    // Check elbow servo angle constraints
+    if (servo2 < 0 || servo2 > 180) {
+      Serial.print("Warning: IK solution elbow servo ("); Serial.print(servo2);
+      Serial.println("°) outside servo range (0-180°) - target clamped");
+      servo2 = constrain(servo2, 0, 180);
+    }
+    
+    setShoulderTarget(th1);  // Use centralized method
     setTarget(IDX_ELBOW, servo2);
+    
     Serial.print("Moving to: ("); Serial.print(x); Serial.print(","); Serial.print(y); 
-    Serial.print(") - shoulder: "); Serial.print(th1); Serial.println("°");
+    Serial.print(") - shoulder: "); Serial.print(th1); 
+    Serial.print("° IK_theta2: "); Serial.print(th2);
+    Serial.print("° servo: "); Serial.print(servo2); Serial.println("°");
   } else {
     Serial.println("Target out of reach!");
   }
@@ -362,7 +446,7 @@ void ServoController::setWristLockAngle(float angle_degrees) {
     Serial.print("° relative to horizontal");
     
     // Show approximate servo position for this angle (assumes 0° shoulder/elbow)
-    float approx_servo = WRIST_MOUNTING_OFFSET - (90.0 + wrist_lock_angle);
+    float approx_servo = 75.0 + wrist_lock_angle;  // Corrected formula
     Serial.print(" [~"); Serial.print(approx_servo); Serial.println("° servo position]");
   } else {
     Serial.print("Wrist lock angle set to "); 
@@ -385,37 +469,37 @@ void ServoController::setMaxSpeed(int idx, float maxSpeed) {
   }
 }
 
+// FIXED: Wrist lock with proper geometry
 void ServoController::applyWristLock() {  
   if (!wrist_lock_enabled) return;
   
-  float angle_1 = current_pos[IDX_SHOULDER_L];  // Use left shoulder angle for calculation
-  float angle_2 = current_pos[IDX_ELBOW];       // Elbow angle
+  float shoulder_angle = current_pos[IDX_SHOULDER_L];  // shoulder joint angle
+  float elbow_servo_angle = current_pos[IDX_ELBOW];    // elbow servo angle
   
-  // CORRECTED FORMULA for your mounting configuration:
-  // Servo 0° = +120° relative to arm (pointing way up)
-  // Servo 180° = -60° relative to arm (pointing down)
-  // Relationship: arm_relative_angle = WRIST_MOUNTING_OFFSET - servo_position
-  // Therefore: servo_position = WRIST_MOUNTING_OFFSET - arm_relative_angle
+  // Convert elbow servo angle to joint angle
+  float elbow_joint_angle = ELBOW_OFFSET - elbow_servo_angle;  // servo 40° = 0° joint
   
-  // Calculate desired arm-relative angle to maintain horizontal + user offset
-  float desired_arm_relative = (90.0 - angle_1 + angle_2) + wrist_lock_angle;
+  // Calculate the angle of the second arm segment relative to horizontal
+  // Second arm angle = shoulder angle + elbow joint angle
+  float second_arm_angle = shoulder_angle + elbow_joint_angle;
   
-  // Convert to servo position using mounting relationship
-  float lockAng = WRIST_MOUNTING_OFFSET - desired_arm_relative;
+  // Calculate desired wrist servo angle to maintain lock angle relative to horizontal
+  // Wrist geometry: wrist_angle_from_extension = servo_angle - 75°
+  // So: servo_angle = wrist_angle_from_extension + 75°
   
-  // Constrain to physical servo limits
-  lockAng = constrain(lockAng, 0.0, 180.0);
+  // To maintain wrist_lock_angle relative to horizontal:
+  // wrist_angle_from_horizontal = wrist_lock_angle
+  // wrist_angle_from_extension = wrist_angle_from_horizontal - second_arm_angle
+  float desired_wrist_from_extension = wrist_lock_angle - second_arm_angle;
   
-  // Debug output to verify calculations
-  if (fabs(lockAng - current_pos[IDX_WRIST]) > 1.0) {
-    Serial.print("Wrist lock: S="); Serial.print(angle_1);
-    Serial.print("° E="); Serial.print(angle_2);
-    Serial.print("° → Servo="); Serial.print(lockAng);
-    Serial.print("° (lock angle: "); Serial.print(wrist_lock_angle);
-    
-    // Show actual wrist angle relative to arm for verification
-    float actual_arm_relative = WRIST_MOUNTING_OFFSET - lockAng;
-    Serial.print("°) [Arm-relative: "); Serial.print(actual_arm_relative); Serial.println("°]");
+  // Convert to servo position: servo = wrist_angle_from_extension + 75°
+  float lockAng = desired_wrist_from_extension + 75.0;
+  
+  // Constrain to servo limits
+  if (lockAng < 0) {
+    lockAng = 0;
+  } else if (lockAng > 180) {
+    lockAng = 180;
   }
   
   servos[IDX_WRIST].write(lockAng);
@@ -423,11 +507,62 @@ void ServoController::applyWristLock() {
   target_pos[IDX_WRIST] = lockAng;
 }
 
-// kinematics
+// Enhanced wrist diagnostic function
+void ServoController::diagnoseWristIssue() {
+  Serial.println("=== KINEMATICS DIAGNOSTIC ===");
+  Serial.print("Arm geometry: L1="); Serial.print(ARM_L1);
+  Serial.print("cm L2="); Serial.print(ARM_L2);
+  Serial.print("cm ELBOW_OFFSET="); Serial.print(ELBOW_OFFSET); Serial.println("°");
+  Serial.print("Max reach: "); Serial.print(ARM_L1 + ARM_L2);
+  Serial.print("cm Min reach: "); Serial.println(fabs(ARM_L1 - ARM_L2));
+  Serial.println();
+  
+  Serial.println("Forward/Inverse Kinematics Test:");
+  float test_points[][2] = {{15, 15}, {20, 10}, {10, 20}, {25, 5}, {5, 25}, {30, 0}};
+  
+  for (int i = 0; i < 6; i++) {
+    float target_x = test_points[i][0];
+    float target_y = test_points[i][1];
+    float distance = sqrt(target_x*target_x + target_y*target_y);
+    
+    Serial.print("Target: ("); Serial.print(target_x); Serial.print(","); Serial.print(target_y);
+    Serial.print(") dist="); Serial.print(distance, 1); Serial.print(" → ");
+    
+    float th1, th2;
+    if (inverseKinematics(target_x, target_y, th1, th2)) {
+      float servo2 = ELBOW_OFFSET - th2;
+      Serial.print("IK: S="); Serial.print(th1, 1); Serial.print("° th2="); Serial.print(th2, 1);
+      Serial.print("° servo="); Serial.print(servo2, 1); Serial.print("° → ");
+      
+      // Test forward kinematics round-trip
+      Point result = forwardKinematics(th1, servo2);
+      
+      Serial.print("FK: ("); Serial.print(result.x, 2); Serial.print(","); Serial.print(result.y, 2); Serial.print(") ");
+      
+      float error = sqrt((result.x - target_x)*(result.x - target_x) + (result.y - target_y)*(result.y - target_y));
+      Serial.print("Error: "); Serial.print(error, 3);
+      
+      if (error < 0.01) Serial.println(" ✓EXCELLENT");
+      else if (error < 0.1) Serial.println(" ✓GOOD");
+      else Serial.println(" ✗ERROR!");
+    } else {
+      Serial.println("OUT OF REACH");
+    }
+  }
+  
+  Serial.println("========================");
+}
+
+// EXACT working pattern: Forward kinematics
 Point ServoController::forwardKinematics(float theta1, float theta2) {
+  // theta1: shoulder joint angle (0-180°)
+  // theta2: elbow servo angle (0-180°)
+  
+  // EXACT same pattern as working code
   float t1 = theta1 * DEG2RAD;
   float phi = (ELBOW_OFFSET - theta2) * DEG2RAD;
   
+  // Standard 2-DOF arm forward kinematics
   Point W;
   W.x = ARM_L1 * cos(t1) + ARM_L2 * cos(t1 + phi);
   W.y = ARM_L1 * sin(t1) + ARM_L2 * sin(t1 + phi);
@@ -435,7 +570,9 @@ Point ServoController::forwardKinematics(float theta1, float theta2) {
   return W;
 }
 
+// EXACT working pattern: Inverse kinematics  
 bool ServoController::inverseKinematics(float x, float y, float &theta1, float &theta2) {
+  // EXACT same pattern as working code
   float r2 = x*x + y*y;
   float cosPsi = (r2 - ARM_L1*ARM_L1 - ARM_L2*ARM_L2) / (2 * ARM_L1 * ARM_L2);
   if (cosPsi < -1.0 || cosPsi > 1.0) return false;
@@ -444,8 +581,10 @@ bool ServoController::inverseKinematics(float x, float y, float &theta1, float &
   float alpha = atan2(y, x);
   float beta = atan2(ARM_L2 * sin(psi), ARM_L1 + ARM_L2 * cos(psi));
   
-  theta1 = (alpha + beta) * RAD2DEG;
-  theta2 = -psi * RAD2DEG;
+  // EXACT same sign convention as working code
+  theta1 = (alpha + beta) * RAD2DEG;  // PLUS beta
+  theta2 = -psi * RAD2DEG;            // NEGATIVE psi
+  
   return true;
 }
 
@@ -465,16 +604,17 @@ void ServoController::printStatus() {
   Serial.println("=== Servo Status ===");
   for (int i = 0; i < NUM_SERVOS; i++) {
     Serial.print("Joint "); Serial.print(i);
+    if (i == IDX_BASE) Serial.print(" (Base)");
+    else if (i == IDX_SHOULDER_L) Serial.print(" (Shoulder L)");
+    else if (i == IDX_SHOULDER_R) Serial.print(" (Shoulder R)");
+    else if (i == IDX_ELBOW) Serial.print(" (Elbow)");
+    else if (i == IDX_WRIST) Serial.print(" (Wrist)");
+    
     Serial.print(": "); Serial.print(current_pos[i]);
     Serial.print("° → "); Serial.print(target_pos[i]);
     Serial.print("° (home: "); Serial.print(home_pos[i]);
     Serial.print("°, speed: "); Serial.print(speed_cmd[i]); Serial.println(")");
   }
-  
-  Serial.print("Fixed shoulder offset: "); Serial.print(SHOULDER_R_OFFSET);
-  Serial.print("° | Left shoulder constraint: 0-"); Serial.print(SHOULDER_R_OFFSET); Serial.println("°");
-  Serial.print("Shoulder mapping: L=0°→R="); Serial.print(SHOULDER_R_OFFSET);
-  Serial.print("°, L="); Serial.print(SHOULDER_R_OFFSET); Serial.println("°→R=0°");
   
   Point pos = getCurrentPosition();
   Serial.print("Wrist: ("); Serial.print(pos.x); Serial.print(", "); Serial.print(pos.y); Serial.println(")");
