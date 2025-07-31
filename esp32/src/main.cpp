@@ -49,19 +49,18 @@ void loop() {
   // always update arm controller
   arm.update();
   
-  // Handle serial commands (both Pi and local debug)
+  // handle serial commands
   if (Serial.available()) {
     String command = Serial.readStringUntil('\n');
     command.trim();
     
     if (command.length() > 0) {
-      // Check if it's a Pi command or local debug command
       if (command.startsWith("PI:")) {
-        // Handle Pi command
+        // handle pi command
         PiResponse response = piComm.processCommand(command);
         piComm.sendResponse(response);
       } else {
-        // Handle local debug command
+        // handle local command
         handleLocalCommand(command);
       }
     }
@@ -77,7 +76,7 @@ void handleLocalCommand(String cmd) {
     printSystemStatus();
   }
   else if (cmd == "sensors") {
-    sensorLineFollower.printSensorValues();  // Now called on LineFollower
+    sensorLineFollower.printSensorValues();
   }
   else if (cmd == "arm") {
     arm.printStatus();
@@ -115,12 +114,10 @@ void printSystemStatus() {
 
 void emergencyStop() {
   Serial.println("EMERGENCY STOP ACTIVATED!");
-  
-  // Stop all movement
+
   motors.stop();
   sensorLineFollower.stop();
   arm.stopAll();
-  
-  // Send emergency notification to Pi
+
   Serial.println("ESP:EMERGENCY_STOP");
 }
