@@ -69,22 +69,12 @@
 #define DEG2RAD                 (3.14159265/180.0)
 #define RAD2DEG                 (180.0/3.14159265)
 
-// physical mounting offsets
+// servo offset compensation
 #define SHOULDER_R_OFFSET       174.0 
 #define WRIST_LOWER_LIMIT       -75
 #define WRIST_UPPER_LIMIT       105
-
-// Base servo offset compensation
 #define BASE_SERVO_OFFSET       10    // Base servo offset from 0°
-#define BASE_PERPENDICULAR      80    // User angle where base is actually perpendicular
-
-// CORRECTED: Wrist servo geometry constants
-// Servo 0° = 75° below second arm extension
-// Servo 75° = aligned with second arm extension  
-// Servo 180° = 105° above second arm extension
 #define WRIST_SERVO_ALIGNED     75      // Servo angle when aligned with second arm
-#define WRIST_RANGE_BELOW       75      // Degrees below extension at servo 0°
-#define WRIST_RANGE_ABOVE       105     // Degrees above extension at servo 180°
 
 // forward declarations
 class MotorController;
