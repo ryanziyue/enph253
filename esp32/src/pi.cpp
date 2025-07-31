@@ -441,7 +441,7 @@ void PiComm::sendResponse(const PiResponse& response) {
       Serial.println("ESP:" + response.data);
     } else {
       // send acknowledgment
-      Serial.println("OK: " + response.message);
+      Serial.println(response.message);
     }
   } else {
     // error
