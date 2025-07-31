@@ -264,20 +264,21 @@ void ServoController::setTarget(int idx, float angle) {
   if (!initialized) return;
   
   if (idx == IDX_BASE) {
-    // For base servo, use the offset compensation method
-    Serial.println("Note: Use setBaseTarget() for proper base offset compensation");
-    // Fall through to allow direct control if needed
+    setBaseTarget(angle);
   }
+
   else if (idx == IDX_SHOULDER_L || idx == IDX_SHOULDER_R) {
-    // For shoulder servos, always use the centralized method
     if (idx == IDX_SHOULDER_L) {
       setShoulderTarget(angle);
-    } else {
-      // If setting right shoulder directly, convert back to left shoulder angle
+    }
+    
+    else {
+      // convert to left angle if using right angle
       float left_angle = SHOULDER_R_OFFSET - angle;
-      left_angle = constrain(left_angle, 0, SHOULDER_R_OFFSET);  // Apply constraint
+      left_angle = constrain(left_angle, 0, SHOULDER_R_OFFSET);
       setShoulderTarget(left_angle);
     }
+
     return;
   }
   
