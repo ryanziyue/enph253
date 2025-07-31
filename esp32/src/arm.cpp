@@ -264,21 +264,20 @@ void ServoController::setTarget(int idx, float angle) {
   if (!initialized) return;
   
   if (idx == IDX_BASE) {
-    setBaseTarget(angle);
+    // For base servo, use the offset compensation method
+    Serial.println("Note: Use setBaseTarget() for proper base offset compensation");
+    // Fall through to allow direct control if needed
   }
-
   else if (idx == IDX_SHOULDER_L || idx == IDX_SHOULDER_R) {
+    // For shoulder servos, always use the centralized method
     if (idx == IDX_SHOULDER_L) {
       setShoulderTarget(angle);
-    }
-    
-    else {
-      // convert to left angle if using right angle
+    } else {
+      // If setting right shoulder directly, convert back to left shoulder angle
       float left_angle = SHOULDER_R_OFFSET - angle;
-      left_angle = constrain(left_angle, 0, SHOULDER_R_OFFSET);
+      left_angle = constrain(left_angle, 0, SHOULDER_R_OFFSET);  // Apply constraint
       setShoulderTarget(left_angle);
     }
-
     return;
   }
   
@@ -470,7 +469,6 @@ void ServoController::setMaxSpeed(int idx, float maxSpeed) {
   }
 }
 
-// FIXED: Wrist lock with proper geometry
 void ServoController::applyWristLock() {  
   if (!wrist_lock_enabled) return;
   
@@ -494,7 +492,7 @@ void ServoController::applyWristLock() {
   float desired_wrist_from_extension = wrist_lock_angle - second_arm_angle;
   
   // Convert to servo position: servo = wrist_angle_from_extension + 75°
-  float lockAng = desired_wrist_from_extension + 75.0;
+  float lockAng = desired_wrist_from_extension + WRIST_SERVO_ALIGNED;
   
   // Constrain to servo limits
   if (lockAng < 0) {
