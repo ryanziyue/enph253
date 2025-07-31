@@ -3,8 +3,8 @@
 
 // arm pins
 #define SERVO_BASE_PIN          14
-#define SERVO_SHOULDER_L        12
-#define SERVO_SHOULDER_R        13
+#define SERVO_SHOULDER_L        13
+#define SERVO_SHOULDER_R        12
 #define SERVO_ELBOW_PIN         33
 #define SERVO_WRIST_PIN         27
 #define SERVO_CLAW_PIN          15
@@ -34,17 +34,17 @@
 #define PWM_RES_BITS            8
 
 // line following params
-#define K_P                     45.0
+#define K_P                     30.0
 #define K_I                     0.0
 #define K_D                     0.0
 #define K_O                     2.0
-#define TARGET_POSITION         220.0
+#define TARGET_POSITION         150.0
 #define CURRENT_POSITION        0.0
 #define BASE_SPEED              190
-#define SENSOR_THRESHOLD_R1     1.7
-#define SENSOR_THRESHOLD_L1     1.7
-#define SENSOR_THRESHOLD_R2     1.8
-#define SENSOR_THRESHOLD_L2     1.8
+#define SENSOR_THRESHOLD_R1     2.0
+#define SENSOR_THRESHOLD_L1     2.0
+#define SENSOR_THRESHOLD_R2     2.0
+#define SENSOR_THRESHOLD_L2     2.0
 
 // speed parameters
 #define MOTOR_MIN_SPEED         175
@@ -63,17 +63,28 @@
 #define IDX_WRIST               4
 
 // kinematics constants
-#define ARM_L1                  19.6
-#define ARM_L2                  15.8
-#define ELBOW_OFFSET            10.0
+#define ARM_L1                  14.5
+#define ARM_L2                  12.547
+#define ELBOW_OFFSET            40.0
 #define DEG2RAD                 (3.14159265/180.0)
 #define RAD2DEG                 (180.0/3.14159265)
 
 // physical mounting offsets
-#define SHOULDER_R_OFFSET       173.0 
-#define WRIST_MOUNTING_OFFSET   120
-#define WRIST_LOWER_LIMIT       -60
-#define WRIST_UPPER_LIMIT        120
+#define SHOULDER_R_OFFSET       174.0 
+#define WRIST_LOWER_LIMIT       -75
+#define WRIST_UPPER_LIMIT       105
+
+// Base servo offset compensation
+#define BASE_SERVO_OFFSET       10    // Base servo offset from 0°
+#define BASE_PERPENDICULAR      80    // User angle where base is actually perpendicular
+
+// CORRECTED: Wrist servo geometry constants
+// Servo 0° = 75° below second arm extension
+// Servo 75° = aligned with second arm extension  
+// Servo 180° = 105° above second arm extension
+#define WRIST_SERVO_ALIGNED     75      // Servo angle when aligned with second arm
+#define WRIST_RANGE_BELOW       75      // Degrees below extension at servo 0°
+#define WRIST_RANGE_ABOVE       105     // Degrees above extension at servo 180°
 
 // forward declarations
 class MotorController;
