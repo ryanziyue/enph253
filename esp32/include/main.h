@@ -73,8 +73,9 @@
 #define SHOULDER_R_OFFSET       174.0 
 #define WRIST_LOWER_LIMIT       -75
 #define WRIST_UPPER_LIMIT       105
-#define BASE_SERVO_OFFSET       10    // Base servo offset from 0°
 #define WRIST_SERVO_ALIGNED     75      // Servo angle when aligned with second arm
+#define BASE_SERVO_OFFSET       10    // Base servo offset from 0°
+
 
 // forward declarations
 class MotorController;
