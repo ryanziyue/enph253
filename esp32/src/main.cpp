@@ -11,22 +11,13 @@ MotorController motors;
 LineFollower sensorLineFollower(&motors);
 PiComm piComm(&motors, &arm, &sensorLineFollower);
 
-// limit switch variables
-bool lastLimitSwitchState = false;
-unsigned long lastLimitSwitchTime = 0;
-const unsigned long DEBOUNCE_DELAY = 50; // 50ms debounce
-
 // system state
 bool systemInitialized = false;
 
-void checkLimitSwitch();
 void handleLocalCommand(String);
 
 void setup() {
   Serial.begin(115200);
-  
-  // initialize limit switch pin
-  pinMode(LIMIT_SWITCH_PIN, INPUT_PULLUP);
   
   // initialize controllers
   motors.init();
@@ -76,9 +67,6 @@ void loop() {
     }
   }
   
-  // Check limit switch
-  checkLimitSwitch();
-  
   delay(10);
 }
 
@@ -109,31 +97,9 @@ void handleLocalCommand(String cmd) {
   }
 }
 
-void checkLimitSwitch() {
-  bool currentState = !digitalRead(LIMIT_SWITCH_PIN); // Inverted because of pullup
-  unsigned long currentTime = millis();
-  
-  // Debounce the switch
-  if (currentState != lastLimitSwitchState && 
-      (currentTime - lastLimitSwitchTime) > DEBOUNCE_DELAY) {
-    
-    lastLimitSwitchState = currentState;
-    lastLimitSwitchTime = currentTime;
-    
-    // Send notification on rising edge (switch pressed)
-    if (currentState) {
-      piComm.sendLimitSwitchPressed();
-      
-      // Optional: Emergency stop on limit switch
-      // emergencyStop();
-    }
-  }
-}
-
 void printSystemStatus() {
   Serial.println("\n=== SYSTEM STATUS ===");
   Serial.print("System Initialized: "); Serial.println(systemInitialized ? "Yes" : "No");
-  Serial.print("Limit Switch: "); Serial.println(lastLimitSwitchState ? "PRESSED" : "Released");
   
   Serial.println("\n--- Motor Controller ---");
   motors.printStatus();
