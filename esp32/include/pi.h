@@ -56,6 +56,5 @@ public:
   // utility functions
   void sendResponse(const PiResponse& response);            // ESP:OK/ERROR:msg
   void sendPositionUpdate();                                // ESP:x,y
-  void sendLimitSwitchPressed();                            // ESP:LS
   bool isValidCommand(const String& cmd);
 };
