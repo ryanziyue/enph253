@@ -76,7 +76,7 @@ PiResponse PiComm::processCommand(const String& cmd) {
 // ------- LINEFOLLOWING COMMANDS -------
 PiResponse PiComm::handlePIDSettingCommand(const String& cmd) {
   float kp, ki, kd, ko;
-  if (sscanf(cmd.c_str(), "PI:PID,%f,%f,%f", &kp, &ki, &kd, &ko) != 4) {
+  if (sscanf(cmd.c_str(), "PI:PID,%f,%f,%f,%f", &kp, &ki, &kd, &ko) != 4) {
     return PiResponse(false, "Invalid PID command format. Use PI:PID,kp,ki,kd,ko");
   }
 
@@ -110,26 +110,6 @@ PiResponse PiComm::handleSensorThresholdCommand(const String& cmd) {
   }
 
   return PiResponse(true, "Sensor thresholds set to r1 = " + String(r1) + " , l1 = " + String(l1) + ", r2 = " + String(r2) + ", l2 = " + String(l2));
-}
-
-// ------- MOTOR CONTROL COMMANDS ------- 
-
-PiResponse PiComm::handleMotorCommand(const String& cmd) {
-  // parse: PI:MC,x,y
-  int x = 0, y = 0;
-  if (sscanf(cmd.c_str(), "PI:MC,%d,%d", &x, &y) != 2) {
-    return PiResponse(false, "Invalid motor command format. Use PI:MC,left,right");
-  }
-  
-  // stop line following manual motor control takes priority
-  if (lineFollower && lineFollower->isRunning()) {
-    lineFollower->stop();
-  }
-  
-  // Execute command
-  motors->setMotors(x, y);
-  
-  return PiResponse(true, "Motors set to L=" + String(x) + " R=" + String(y));
 }
 
 PiResponse PiComm::handleLineFollowToggle(const String& cmd) {
@@ -210,6 +190,35 @@ PiResponse PiComm::handleReflectanceDataCommand(const String& cmd) {
 
   return PiResponse(true, s);
   
+}
+
+// ------- MOTOR CONTROL COMMANDS ------- 
+
+PiResponse PiComm::handleMotorCommand(const String& cmd) {
+  // parse: PI:MC,x,y
+  int x = 0, y = 0;
+  if (sscanf(cmd.c_str(), "PI:MC,%d,%d", &x, &y) != 2) {
+    return PiResponse(false, "Invalid motor command format. Use PI:MC,left,right");
+  }
+  
+  // stop line following manual motor control takes priority
+  if (lineFollower && lineFollower->isRunning()) {
+    lineFollower->stop();
+  }
+  
+  // Execute command
+  motors->setMotors(x, y);
+  
+  return PiResponse(true, "Motors set to L=" + String(x) + " R=" + String(y));
+}
+
+PiResponse PiComm::handleMotorSampleCommand(const String& cmd) {
+  // parse: PI:MS
+  int l, r;
+  l = motors->getLeftSpeed();
+  r = motors->getRightSpeed();
+
+  return PiResponse(true, String(l) + "," + String(r));
 }
 
 // ------- ARM CONTROL COMMANDS ------- 
