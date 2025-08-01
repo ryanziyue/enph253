@@ -32,6 +32,7 @@ private:
 
   // command parsing helpers - MOTOR CONTROL
   PiResponse handleMotorCommand(const String& cmd);                 // PI:MC,x,y
+  PiResponse handleMotorSampleCommand(const String& cmd);           // PI:MS
 
   
   // command parsing helpers - ARM CONTROL
