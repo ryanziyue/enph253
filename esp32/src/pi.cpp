@@ -72,14 +72,15 @@ PiResponse PiComm::processCommand(const String& cmd) {
 
 // ------- LINEFOLLOWING COMMANDS -------
 PiResponse PiComm::handlePIDSettingCommand(const String& cmd) {
-  float kp, ki, kd;
-  if (sscanf(cmd.c_str(), "PI:PID,%f,%f,%f", &kp, &ki, &kd) != 3) {
-    return PiResponse(false, "Invalid PID command format. Use PI:PID,kp,ki,kd");
+  float kp, ki, kd, ko;
+  if (sscanf(cmd.c_str(), "PI:PID,%f,%f,%f", &kp, &ki, &kd, &ko) != 4) {
+    return PiResponse(false, "Invalid PID command format. Use PI:PID,kp,ki,kd,ko");
   }
 
   lineFollower->setPID(kp, ki, kd);
+  lineFollower->setKo(ko);
 
-  return PiResponse(true, "PID values set to Kp = " + String(kp) + " , Ki = " + String(ki) + ", Kd = " + String(kd));
+  return PiResponse(true, "PID values set to Kp = " + String(kp) + " , Ki = " + String(ki) + ", Kd = " + String(kd) + ", Ko = " + String(ko));
 }
 
 PiResponse PiComm::handleTargetPositionCommand(const String& cmd) {
