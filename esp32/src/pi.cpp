@@ -20,9 +20,6 @@ PiResponse PiComm::processCommand(const String& cmd) {
   else if (cmd.startsWith("PI:ST,")) {
     return handleSensorThresholdCommand(cmd);
   }
-  else if (cmd.startsWith("PI:MC,")) {
-    return handleMotorCommand(cmd);
-  }
   else if (cmd.startsWith("PI:LF,")) {
     return handleLineFollowToggle(cmd);
   }
@@ -31,6 +28,15 @@ PiResponse PiComm::processCommand(const String& cmd) {
   }
   else if (cmd.startsWith("PI:LMS,")) {
     return handleMinSpeed(cmd);
+  }
+  else if (cmd.startsWith("PI:REF")) {
+    return handleReflectanceDataCommand(cmd);
+  }
+  else if (cmd.startsWith("PI:MC,")) {
+    return handleMotorCommand(cmd);
+  }
+  else if (cmd.startsWith("PI:MS")) {
+    return handleMotorSampleCommand(cmd);
   }
   else if (cmd.startsWith("PI:SP,")) {
     return handleServoPositionCommand(cmd);
@@ -58,9 +64,6 @@ PiResponse PiComm::processCommand(const String& cmd) {
   }
   else if (cmd.startsWith("PI:SMS,")) {
     return handleAllServoMaxSpeedsCommand(cmd);
-  }
-  else if (cmd.startsWith("PI:REF")) {
-    return handleReflectanceDataCommand(cmd);
   }
   else if (cmd.equals("PI:STATUS")) {
     return handleStatusRequest(cmd);
