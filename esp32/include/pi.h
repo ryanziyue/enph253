@@ -21,17 +21,18 @@ private:
   ServoController* servos;
   LineFollower* lineFollower;
   
-  // command parsing helpers - PID CONTROL
-  PiResponse handlePIDSettingCommand(const String& cmd);            // PI:PID,kp,ki,kd
+  // command parsing helpers - LINE FOLLOWING CONTROL
+  PiResponse handlePIDSettingCommand(const String& cmd);            // PI:PID,kp,ki,kd,ko
   PiResponse handleTargetPositionCommand(const String& cmd);        // PI:TP,x
   PiResponse handleSensorThresholdCommand(const String& cmd);       // PI:ST,r1,l1,r2,l2
-
-  // command parsing helpers - MOTOR CONTROL
-  PiResponse handleMotorCommand(const String& cmd);                 // PI:MC,x,y
   PiResponse handleLineFollowToggle(const String& cmd);             // PI:LF,x
   PiResponse handleBaseSpeed(const String& cmd);                    // PI:LBS,x
   PiResponse handleMinSpeed(const String& cmd);                     // PI:LMS,x
-  PiResponse handleReflectanceDataCommand(const String& cmd);
+  PiResponse handleReflectanceDataCommand(const String& cmd);       // PI:REF
+
+  // command parsing helpers - MOTOR CONTROL
+  PiResponse handleMotorCommand(const String& cmd);                 // PI:MC,x,y
+
   
   // command parsing helpers - ARM CONTROL
   PiResponse handleServoPositionCommand(const String& cmd);         // PI:SP,a,b,c
