@@ -212,7 +212,9 @@ PiResponse PiComm::handleMotorSampleCommand(const String& cmd) {
   l = motors->getLeftSpeed();
   r = motors->getRightSpeed();
 
-  return PiResponse(true, String(l) + "," + String(r));
+  String s = "MS," + String(l) + "," + String(r);
+
+  return PiResponse(true, "Motor speeds retrieved", s);
 }
 
 // ------- ARM CONTROL COMMANDS ------- 
