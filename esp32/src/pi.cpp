@@ -179,16 +179,10 @@ PiResponse PiComm::handleReflectanceDataCommand(const String& cmd) {
   float voltageR2 = lineFollower->getSensorVoltage(2);
   float voltageL2 = lineFollower->getSensorVoltage(3);
 
-  String s;
-  s.reserve(32);
+  String s = "RF," + String(voltageR1, 3) + ',' + String(voltageL1, 3) + ','
+    + String(voltageR2, 3) + ',' + String(voltageL2, 3);
 
-  s  = "ESP:RF,"
-    + String(voltageR1, 3) + ','
-    + String(voltageL1, 3) + ','
-    + String(voltageR2, 3) + ','
-    + String(voltageL2, 3);
-
-  return PiResponse(true, s);
+  return PiResponse(true, "Reflectance data retrieved", s);
   
 }
 
