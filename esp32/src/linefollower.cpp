@@ -120,7 +120,7 @@ void LineFollower::lineFollowLoop() {
     }
     
     // Check if both inner sensors are off the line
-    if (offLine(R1) && offLine(L1)) {
+    if (offLine(R1) && offLine(L1) && offLine(R2) && offLine(L2)) {
       // OFF-LINE HANDLING - EXACTLY like working code
       if (leftTurn) {
         // Left motor backward, right motor forward using targetPosition
@@ -131,7 +131,7 @@ void LineFollower::lineFollowLoop() {
       }
     } else {
       // Normal PID line following - EXACTLY like working code
-      currentPosition = sensorVoltages[L1] - sensorVoltages[R1];
+      currentPosition = Ko * sensorVoltages[L2] + sensorVoltages[L1] - sensorVoltages[R1] - Ko * sensorVoltages[R2];
       
       // CRITICAL: error = currentPosition (NOT currentPosition - targetPosition)
       // Working code does: error = currentPosition;
@@ -139,9 +139,9 @@ void LineFollower::lineFollowLoop() {
       
       // PID calculation - exactly like working code with Ko
       integral += error * (loopDelay / 1000.0);
-      integral = constrain(integral, -100, 100);
+      integral = constrain(integral, -100, 100); // Anti-windup
       float derivative = (error - previousError) / (loopDelay / 1000.0);
-      float output = (Kp * error + Ki * integral + Kd * derivative) * Ko;  // Multiply by Ko!
+      float output = (Kp * error + Ki * integral + Kd * derivative);
       
       // Apply PID output to motors - exactly like working code
       int leftSpeed = baseSpeed + (int)output;
