@@ -92,6 +92,7 @@ void ServoController::init() {
   Serial.print("cm Min reach: "); Serial.println(fabs(ARM_L1 - ARM_L2));
 }
 
+// FIXED: Updated IK velocity handling in update() method
 void ServoController::update() {
   if (!initialized) return;
   
@@ -109,35 +110,47 @@ void ServoController::update() {
       // solve IK
       float th1, th2;
       if (inverseKinematics(ik_target_x, ik_target_y, th1, th2)) {
-        // Check shoulder constraint for IK velocity mode
+        // FIXED: Check constraints but don't immediately stop - just clamp
+        bool constrained = false;
+        
         if (th1 > SHOULDER_R_OFFSET || th1 < 0) {
-          // Hit constraint - stop velocity mode
-          ik_vel_enabled = false;
-          stopAll();
-          Serial.print("IK velocity stopped - shoulder constraint reached (");
-          Serial.print(th1); Serial.print("° not in range 0-"); Serial.print(SHOULDER_R_OFFSET); Serial.println("°)");
-          return;
+          th1 = constrain(th1, 0, SHOULDER_R_OFFSET);
+          constrained = true;
+          Serial.print("IK velocity: shoulder clamped to "); Serial.println(th1);
         }
         
-        // Convert IK result to servo angle - EXACT working pattern
+        // Convert IK result to servo angle
         float servo2 = ELBOW_OFFSET - th2;
         
-        // Check elbow servo constraint
         if (servo2 < 0 || servo2 > 180) {
+          servo2 = constrain(servo2, 0, 180);
+          constrained = true;
+          Serial.print("IK velocity: elbow clamped to "); Serial.println(servo2);
+        }
+        
+        // Only stop if we're consistently hitting constraints AND have zero velocity
+        if (constrained && fabs(ik_vx) < 0.1 && fabs(ik_vy) < 0.1) {
           ik_vel_enabled = false;
-          stopAll();
-          Serial.print("IK velocity stopped - elbow servo constraint reached (");
-          Serial.print(servo2); Serial.println("° not in range 0-180°)");
+          Serial.println("IK velocity stopped - low velocity at constraint boundary");
           return;
         }
         
-        setShoulderTarget(th1);  // Use centralized method
+        setShoulderTarget(th1);
         setTarget(IDX_ELBOW, servo2);
       } else {
-        // hit boundary - stop
-        ik_vel_enabled = false;
-        stopAll();
-        Serial.println("IK velocity stopped - out of reach");
+        // FIXED: Don't stop immediately, try to back off
+        Serial.println("IK velocity: out of reach, backing off...");
+        ik_target_x -= ik_vx * dt * 0.5;  // back off by half step
+        ik_target_y -= ik_vy * dt * 0.5;
+        
+        // If velocity is pushing us further out of reach, stop
+        float current_dist = sqrt(ik_target_x*ik_target_x + ik_target_y*ik_target_y);
+        float max_reach = ARM_L1 + ARM_L2;
+        if (current_dist > max_reach && (ik_vx*ik_target_x + ik_vy*ik_target_y) > 0) {
+          ik_vel_enabled = false;
+          stopAll();
+          Serial.println("IK velocity stopped - moving away from workspace");
+        }
       }
     }
   }
@@ -158,18 +171,21 @@ void ServoController::updateMotion() {
   // Handle shoulder coordination first (speed-based movement)
   bool left_shoulder_moved = false;
   if (fabs(speed_cmd[IDX_SHOULDER_L]) > 1e-3) {
-    target_pos[IDX_SHOULDER_L] += speed_cmd[IDX_SHOULDER_L] * dt;
+    float new_target = target_pos[IDX_SHOULDER_L] + speed_cmd[IDX_SHOULDER_L] * dt;
     
-    // apply left shoulder constraint
-    if (target_pos[IDX_SHOULDER_L] < 0) { 
+    // FIXED: Apply constraints but DON'T zero speed commands
+    if (new_target < 0) { 
       target_pos[IDX_SHOULDER_L] = 0; 
-      speed_cmd[IDX_SHOULDER_L] = 0; 
-      speed_cmd[IDX_SHOULDER_R] = 0; // stop both shoulders
+      // DON'T: speed_cmd[IDX_SHOULDER_L] = 0; 
+      // DON'T: speed_cmd[IDX_SHOULDER_R] = 0;
     }
-    else if (target_pos[IDX_SHOULDER_L] > SHOULDER_R_OFFSET) { 
+    else if (new_target > SHOULDER_R_OFFSET) { 
       target_pos[IDX_SHOULDER_L] = SHOULDER_R_OFFSET; 
-      speed_cmd[IDX_SHOULDER_L] = 0;
-      speed_cmd[IDX_SHOULDER_R] = 0; // stop both shoulders
+      // DON'T: speed_cmd[IDX_SHOULDER_L] = 0;
+      // DON'T: speed_cmd[IDX_SHOULDER_R] = 0;
+    }
+    else {
+      target_pos[IDX_SHOULDER_L] = new_target;
     }
     
     // update right shoulder to maintain coordination
@@ -184,23 +200,35 @@ void ServoController::updateMotion() {
     
     // drive target by speed command for non-shoulder servos
     if (fabs(speed_cmd[i]) > 1e-3) {
-      target_pos[i] += speed_cmd[i] * dt;
+      float new_target = target_pos[i] + speed_cmd[i] * dt;
       
-      // Apply constraints based on servo type
+      // FIXED: Apply constraints based on servo type but DON'T zero speed commands
       if (i == IDX_BASE) {
         // Base servo constraints with offset
-        if (target_pos[i] < BASE_SERVO_OFFSET) { 
+        if (new_target < BASE_SERVO_OFFSET) { 
           target_pos[i] = BASE_SERVO_OFFSET; 
-          speed_cmd[i] = 0; 
+          // DON'T: speed_cmd[i] = 0; 
         }
-        else if (target_pos[i] > (180 - BASE_SERVO_OFFSET)) { 
+        else if (new_target > (180 - BASE_SERVO_OFFSET)) { 
           target_pos[i] = 180 - BASE_SERVO_OFFSET; 
-          speed_cmd[i] = 0; 
+          // DON'T: speed_cmd[i] = 0; 
+        }
+        else {
+          target_pos[i] = new_target;
         }
       } else {
         // Standard constraint for other servos
-        if (target_pos[i] < 0) { target_pos[i] = 0; speed_cmd[i] = 0; }
-        else if (target_pos[i] > 180) { target_pos[i] = 180; speed_cmd[i] = 0; }
+        if (new_target < 0) { 
+          target_pos[i] = 0; 
+          // DON'T: speed_cmd[i] = 0; 
+        }
+        else if (new_target > 180) { 
+          target_pos[i] = 180; 
+          // DON'T: speed_cmd[i] = 0; 
+        }
+        else {
+          target_pos[i] = new_target;
+        }
       }
     }
     
@@ -301,10 +329,19 @@ void ServoController::setSpeed(int idx, float speed) {
   }
 }
 
-void ServoController::stopAll() {
+void ServoController::clearSpeedCommands() {
   for (int i = 0; i < NUM_SERVOS; i++) {
     speed_cmd[i] = 0;
   }
+  Serial.println("All speed commands cleared");
+}
+
+void ServoController::stopAll() {
+  clearSpeedCommands();
+  ik_vel_enabled = false;
+  ik_vx = 0;
+  ik_vy = 0;
+  Serial.println("All motion stopped");
 }
 
 void ServoController::resetPosition() {
