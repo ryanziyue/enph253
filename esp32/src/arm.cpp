@@ -3,7 +3,8 @@
 
 ServoController::ServoController() : last_millis(0), last_ik_millis(0),
     ik_vel_enabled(false), ik_target_x(0), ik_target_y(0), ik_vx(0), ik_vy(0),
-    wrist_lock_enabled(true), wrist_lock_angle(0), initialized(false) {
+    wrist_lock_enabled(true), wrist_lock_angle(0), wrist_manual_control_time(0),
+    initialized(false) {
   
   // set max speeds
   max_speed[IDX_BASE] = IDX_BASE_SPEED;
@@ -156,7 +157,12 @@ void ServoController::update() {
   }
   
   // apply wrist lock
-  applyWristLock();
+  if (wrist_lock_enabled) {
+    applyWristLock();
+  }
+  else {
+    setTarget(IDX_WRIST, current_pos[IDX_WRIST]);
+  }
   
   // update motion
   updateMotion();
