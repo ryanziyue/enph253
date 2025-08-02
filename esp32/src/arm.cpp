@@ -160,9 +160,6 @@ void ServoController::update() {
   if (wrist_lock_enabled) {
     applyWristLock();
   }
-  else {
-    setTarget(IDX_WRIST, current_pos[IDX_WRIST]);
-  }
   
   // update motion
   updateMotion();
