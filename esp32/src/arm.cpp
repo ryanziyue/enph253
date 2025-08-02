@@ -171,63 +171,51 @@ void ServoController::updateMotion() {
   if (dt > 0.05) dt = 0.05;
   last_millis = now;
   
-  // Handle shoulder coordination first (speed-based movement)
+  // Handle shoulder coordination (your existing code stays the same)
   bool left_shoulder_moved = false;
   if (fabs(speed_cmd[IDX_SHOULDER_L]) > 1e-3) {
     float new_target = target_pos[IDX_SHOULDER_L] + speed_cmd[IDX_SHOULDER_L] * dt;
     
-    // FIXED: Apply constraints but DON'T zero speed commands
     if (new_target < 0) { 
       target_pos[IDX_SHOULDER_L] = 0; 
-      // DON'T: speed_cmd[IDX_SHOULDER_L] = 0; 
-      // DON'T: speed_cmd[IDX_SHOULDER_R] = 0;
     }
     else if (new_target > SHOULDER_R_OFFSET) { 
       target_pos[IDX_SHOULDER_L] = SHOULDER_R_OFFSET; 
-      // DON'T: speed_cmd[IDX_SHOULDER_L] = 0;
-      // DON'T: speed_cmd[IDX_SHOULDER_R] = 0;
     }
     else {
       target_pos[IDX_SHOULDER_L] = new_target;
     }
     
-    // update right shoulder to maintain coordination
     target_pos[IDX_SHOULDER_R] = convertToRightShoulderAngle(target_pos[IDX_SHOULDER_L]);
     left_shoulder_moved = true;
   }
   
-  // update all joints (skip shoulders if we handled them above, skip wrist if locked)
+  // update all joints
   for (int i = 0; i < NUM_SERVOS; i++) {
-    if (wrist_lock_enabled && i == IDX_WRIST) continue;
+    // CHANGE: Skip wrist if locked OR manually controlled
+    if (i == IDX_WRIST && (wrist_lock_enabled || isWristManuallyControlled())) continue;
     if (left_shoulder_moved && (i == IDX_SHOULDER_L || i == IDX_SHOULDER_R)) continue;
     
-    // drive target by speed command for non-shoulder servos
+    // drive target by speed command (your existing code stays the same)
     if (fabs(speed_cmd[i]) > 1e-3) {
       float new_target = target_pos[i] + speed_cmd[i] * dt;
       
-      // FIXED: Apply constraints based on servo type but DON'T zero speed commands
       if (i == IDX_BASE) {
-        // Base servo constraints with offset
         if (new_target < BASE_SERVO_OFFSET) { 
           target_pos[i] = BASE_SERVO_OFFSET; 
-          // DON'T: speed_cmd[i] = 0; 
         }
         else if (new_target > (180 - BASE_SERVO_OFFSET)) { 
           target_pos[i] = 180 - BASE_SERVO_OFFSET; 
-          // DON'T: speed_cmd[i] = 0; 
         }
         else {
           target_pos[i] = new_target;
         }
       } else {
-        // Standard constraint for other servos
         if (new_target < 0) { 
           target_pos[i] = 0; 
-          // DON'T: speed_cmd[i] = 0; 
         }
         else if (new_target > 180) { 
           target_pos[i] = 180; 
-          // DON'T: speed_cmd[i] = 0; 
         }
         else {
           target_pos[i] = new_target;
@@ -235,7 +223,7 @@ void ServoController::updateMotion() {
       }
     }
     
-    // slew toward target for all servos
+    // slew toward target (your existing code stays the same)
     float delta = target_pos[i] - current_pos[i];
     if (fabs(delta) > 0.5) {
       float step = max_speed[i] * dt;
@@ -295,21 +283,23 @@ void ServoController::setTarget(int idx, float angle) {
   if (!initialized) return;
   
   if (idx == IDX_BASE) {
-    // For base servo, use the offset compensation method
     Serial.println("Note: Use setBaseTarget() for proper base offset compensation");
-    // Fall through to allow direct control if needed
   }
   else if (idx == IDX_SHOULDER_L || idx == IDX_SHOULDER_R) {
-    // For shoulder servos, always use the centralized method
     if (idx == IDX_SHOULDER_L) {
       setShoulderTarget(angle);
     } else {
-      // If setting right shoulder directly, convert back to left shoulder angle
       float left_angle = SHOULDER_R_OFFSET - angle;
-      left_angle = constrain(left_angle, 0, SHOULDER_R_OFFSET);  // Apply constraint
+      left_angle = constrain(left_angle, 0, SHOULDER_R_OFFSET);
       setShoulderTarget(left_angle);
     }
     return;
+  }
+  else if (idx == IDX_WRIST) {
+    // CHANGE: Track when wrist is manually positioned
+    wrist_manual_control_time = millis();
+    Serial.print("Wrist manually positioned to "); Serial.print(angle); 
+    Serial.println("° - manual control active for 2 seconds");
   }
   
   if (idx >= 0 && idx < NUM_SERVOS) {
@@ -337,6 +327,12 @@ void ServoController::clearSpeedCommands() {
     speed_cmd[i] = 0;
   }
   Serial.println("All speed commands cleared");
+}
+
+bool ServoController::isWristManuallyControlled() {
+  const unsigned long MANUAL_CONTROL_TIMEOUT = 2000; // 2 seconds
+  return (wrist_manual_control_time > 0 && 
+    (millis() - wrist_manual_control_time) < MANUAL_CONTROL_TIMEOUT);
 }
 
 void ServoController::stopAll() {
@@ -464,6 +460,13 @@ void ServoController::setGlobalVelocity(float vx, float vy) {
 }
 
 void ServoController::setWristLock(bool enabled, float angle_degrees) {
+  // CHANGE: Clear manual control state when toggling lock
+  if (wrist_lock_enabled != enabled) {
+    speed_cmd[IDX_WRIST] = 0;
+    wrist_manual_control_time = 0;  // Clear manual control timer
+    Serial.println("Wrist state cleared - switching lock mode");
+  }
+  
   wrist_lock_enabled = enabled;
   wrist_lock_angle = constrain(angle_degrees, WRIST_LOWER_LIMIT, WRIST_UPPER_LIMIT);
   
@@ -472,6 +475,9 @@ void ServoController::setWristLock(bool enabled, float angle_degrees) {
     Serial.print(wrist_lock_angle); 
     Serial.print("° relative to horizontal (range: ");
     Serial.print(WRIST_LOWER_LIMIT); Serial.print("° to "); Serial.print(WRIST_UPPER_LIMIT); Serial.println("°)");
+    
+    // CHANGE: Immediately apply the lock
+    applyWristLock();
   } else {
     Serial.println("Wrist lock disabled - wrist moves freely");
   }
@@ -512,34 +518,24 @@ void ServoController::setMaxSpeed(int idx, float maxSpeed) {
 void ServoController::applyWristLock() {  
   if (!wrist_lock_enabled) return;
   
-  float shoulder_angle = current_pos[IDX_SHOULDER_L];  // shoulder joint angle
-  float elbow_servo_angle = current_pos[IDX_ELBOW];    // elbow servo angle
+  // CHANGE: Don't override manual control during timeout period
+  if (isWristManuallyControlled()) {
+    unsigned long time_remaining = 2000 - (millis() - wrist_manual_control_time);
+    Serial.print("Wrist lock waiting - manual control active (");
+    Serial.print(time_remaining); Serial.println("ms remaining)");
+    return;
+  }
   
-  // Convert elbow servo angle to joint angle
-  float elbow_joint_angle = ELBOW_OFFSET - elbow_servo_angle;  // servo 40° = 0° joint
+  // Your existing applyWristLock calculation stays the same
+  float shoulder_angle = current_pos[IDX_SHOULDER_L];
+  float elbow_servo_angle = current_pos[IDX_ELBOW];
   
-  // Calculate the angle of the second arm segment relative to horizontal
-  // Second arm angle = shoulder angle + elbow joint angle
+  float elbow_joint_angle = ELBOW_OFFSET - elbow_servo_angle;
   float second_arm_angle = shoulder_angle + elbow_joint_angle;
-  
-  // Calculate desired wrist servo angle to maintain lock angle relative to horizontal
-  // Wrist geometry: wrist_angle_from_extension = servo_angle - 75°
-  // So: servo_angle = wrist_angle_from_extension + 75°
-  
-  // To maintain wrist_lock_angle relative to horizontal:
-  // wrist_angle_from_horizontal = wrist_lock_angle
-  // wrist_angle_from_extension = wrist_angle_from_horizontal - second_arm_angle
   float desired_wrist_from_extension = wrist_lock_angle - second_arm_angle;
-  
-  // Convert to servo position: servo = wrist_angle_from_extension + 75°
   float lockAng = desired_wrist_from_extension + WRIST_SERVO_ALIGNED;
   
-  // Constrain to servo limits
-  if (lockAng < 0) {
-    lockAng = 0;
-  } else if (lockAng > 180) {
-    lockAng = 180;
-  }
+  lockAng = constrain(lockAng, 0, 180);
   
   servos[IDX_WRIST].write(lockAng);
   current_pos[IDX_WRIST] = lockAng;
