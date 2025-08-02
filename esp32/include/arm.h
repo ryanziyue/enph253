@@ -36,7 +36,8 @@ private:
   // helper methods
   void updateMotion();
   void applyWristLock();
-  float convertToRightShoulderAngle(float left_angle); 
+  float convertToRightShoulderAngle(float left_angle);
+  void clearSpeedCommands(); 
 
 public:
   ServoController();
