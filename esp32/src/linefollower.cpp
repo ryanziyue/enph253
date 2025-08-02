@@ -124,10 +124,10 @@ void LineFollower::lineFollowLoop() {
       // OFF-LINE HANDLING - EXACTLY like working code
       if (leftTurn) {
         // Left motor backward, right motor forward using targetPosition
-        motors->setMotors(-targetPosition, targetPosition);
+        motors->setMotors(-targetPosition - 50, targetPosition);
       } else {
         // Left motor forward, right motor backward using targetPosition  
-        motors->setMotors(targetPosition, -targetPosition);
+        motors->setMotors(targetPosition, -targetPosition - 50); // search_offset, search_speed
       }
     } else {
       // Normal PID line following - EXACTLY like working code
