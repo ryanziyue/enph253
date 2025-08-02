@@ -63,6 +63,7 @@ public:
   void setWristLock(bool enabled, float angle_degrees = 0);
   void setWristLockAngle(float angle_degrees);
   float getWristLockAngle() const { return wrist_lock_angle; }
+  bool isWristLocked() const { return wrist_lock_enabled; }
   void setClaw(float angle);
   void setMaxSpeed(int idx, float maxSpeed);
   
