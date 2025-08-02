@@ -30,6 +30,7 @@ private:
   // wrist lock
   bool wrist_lock_enabled;
   float wrist_lock_angle; 
+  unsigned long wrist_manual_control_time;
   
   bool initialized;
   
@@ -37,7 +38,8 @@ private:
   void updateMotion();
   void applyWristLock();
   float convertToRightShoulderAngle(float left_angle);
-  void clearSpeedCommands(); 
+  void clearSpeedCommands();
+  bool isWristManuallyControlled(); 
 
 public:
   ServoController();
