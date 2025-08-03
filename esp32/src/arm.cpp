@@ -509,14 +509,6 @@ void ServoController::setMaxSpeed(int idx, float maxSpeed) {
 void ServoController::applyWristLock() {  
   if (!wrist_lock_enabled) return;
   
-  // CHANGE: Don't override manual control during timeout period
-  if (isWristManuallyControlled()) {
-    unsigned long time_remaining = 2000 - (millis() - wrist_manual_control_time);
-    Serial.print("Wrist lock waiting - manual control active (");
-    Serial.print(time_remaining); Serial.println("ms remaining)");
-    return;
-  }
-  
   // Your existing applyWristLock calculation stays the same
   float shoulder_angle = current_pos[IDX_SHOULDER_L];
   float elbow_servo_angle = current_pos[IDX_ELBOW];
