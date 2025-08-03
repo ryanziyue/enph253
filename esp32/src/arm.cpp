@@ -284,7 +284,7 @@ void ServoController::setTarget(int idx, float angle) {
   if (idx == IDX_BASE) {
     Serial.println("Note: Use setBaseTarget() for proper base offset compensation");
   }
-  else if (idx == IDX_SHOULDER_L || idx == IDX_SHOULDER_R) {
+  else if (idx == IDX_SHOULDER_L || idx == IDX_SHOULDER_R) {  
     if (idx == IDX_SHOULDER_L) {
       setShoulderTarget(angle);
     } else {
@@ -295,10 +295,14 @@ void ServoController::setTarget(int idx, float angle) {
     return;
   }
   else if (idx == IDX_WRIST) {
-    // CHANGE: Track when wrist is manually positioned
-    wrist_manual_control_time = millis();
-    Serial.print("Wrist manually positioned to "); Serial.print(angle); 
-    Serial.println("° - manual control active for 2 seconds");
+    if (wrist_lock_enabled) {
+      wrist_lock_enabled = false;  // Auto-disable lock
+      Serial.print("Wrist manually positioned to "); Serial.print(angle); 
+      Serial.println("° - wrist lock automatically disabled");
+    } else {
+      Serial.print("Wrist positioned to "); Serial.print(angle); 
+      Serial.println("° - position will persist until lock re-enabled");
+    }
   }
   
   if (idx >= 0 && idx < NUM_SERVOS) {
