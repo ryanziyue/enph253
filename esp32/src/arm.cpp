@@ -328,12 +328,6 @@ void ServoController::clearSpeedCommands() {
   Serial.println("All speed commands cleared");
 }
 
-bool ServoController::isWristManuallyControlled() {
-  const unsigned long MANUAL_CONTROL_TIMEOUT = 2000; // 2 seconds
-  return (wrist_manual_control_time > 0 && 
-    (millis() - wrist_manual_control_time) < MANUAL_CONTROL_TIMEOUT);
-}
-
 void ServoController::stopAll() {
   clearSpeedCommands();
   ik_vel_enabled = false;
