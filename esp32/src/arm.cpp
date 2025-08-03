@@ -192,7 +192,7 @@ void ServoController::updateMotion() {
   // update all joints
   for (int i = 0; i < NUM_SERVOS; i++) {
     // CHANGE: Skip wrist if locked OR manually controlled
-    if (i == IDX_WRIST && (wrist_lock_enabled || isWristManuallyControlled())) continue;
+    if (i == IDX_WRIST && wrist_lock_enabled) continue;
     if (left_shoulder_moved && (i == IDX_SHOULDER_L || i == IDX_SHOULDER_R)) continue;
     
     // drive target by speed command (your existing code stays the same)
