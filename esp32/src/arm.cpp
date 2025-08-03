@@ -457,26 +457,20 @@ void ServoController::setGlobalVelocity(float vx, float vy) {
 }
 
 void ServoController::setWristLock(bool enabled, float angle_degrees) {
-  // CHANGE: Clear manual control state when toggling lock
-  if (wrist_lock_enabled != enabled) {
-    speed_cmd[IDX_WRIST] = 0;
-    wrist_manual_control_time = 0;  // Clear manual control timer
-    Serial.println("Wrist state cleared - switching lock mode");
-  }
-  
   wrist_lock_enabled = enabled;
   wrist_lock_angle = constrain(angle_degrees, WRIST_LOWER_LIMIT, WRIST_UPPER_LIMIT);
   
   if (enabled) {
+    speed_cmd[IDX_WRIST] = 0;  // Clear any speed commands
+    
     Serial.print("Wrist lock enabled at "); 
     Serial.print(wrist_lock_angle); 
     Serial.print("° relative to horizontal (range: ");
     Serial.print(WRIST_LOWER_LIMIT); Serial.print("° to "); Serial.print(WRIST_UPPER_LIMIT); Serial.println("°)");
     
-    // CHANGE: Immediately apply the lock
-    applyWristLock();
+    applyWristLock();  // Apply immediately
   } else {
-    Serial.println("Wrist lock disabled - wrist moves freely");
+    Serial.println("Wrist lock disabled - manual positions will persist until lock re-enabled");
   }
 }
 
