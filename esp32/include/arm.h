@@ -39,7 +39,6 @@ private:
   void applyWristLock();
   float convertToRightShoulderAngle(float left_angle);
   void clearSpeedCommands();
-  bool isWristManuallyControlled(); 
 
 public:
   ServoController();
