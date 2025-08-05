@@ -7,10 +7,12 @@
 #include <Adafruit_SSD1306.h>
 
 // Pin-outs
-#define SWITCH_1_PIN   13
-#define SWITCH_2_PIN   14
-#define BUTTON_1_PIN    9
-#define BUTTON_2_PIN   10
+#define SWITCH_1_PIN    7
+#define SWITCH_2_PIN    8
+#define BUTTON_1_PIN    25
+#define BUTTON_2_PIN    26
+#define SDA_PIN         9
+#define SCK_PIN         10
 
 // OLED
 #define SCREEN_WIDTH   128
