@@ -6,92 +6,92 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-// pinouts
-#define SWITCH_1_PIN    7
-#define SWITCH_2_PIN    8
-#define BUTTON_1_PIN    25
-#define BUTTON_2_PIN    26
-#define SDA_PIN         9
-#define SCK_PIN         10
+// Pin assignments
+#define SWITCH_1_PIN        7
+#define SWITCH_2_PIN        8
+#define BUTTON_START_PIN    25
+#define BUTTON_RESET_PIN    26
+#define SDA_PIN             9
+#define SCK_PIN             10
 
-// oled display
-#define SCREEN_WIDTH    128
-#define SCREEN_HEIGHT   64
-#define OLED_RESET      -1
-#define OLED_ADDRESS    0x3C
+// OLED display settings
+#define SCREEN_WIDTH        128
+#define SCREEN_HEIGHT       64
+#define OLED_RESET          -1
+#define OLED_ADDRESS        0x3C
 
-// timing
+// Timing constants
 #define DEBOUNCE_DELAY      50
 #define RESET_HOLD_TIME     3000  
 #define DISPLAY_UPDATE_MS   100   
 
-// enums
+// System states
 enum SystemState {
   STATE_INIT,
   STATE_READY,
   STATE_RUNNING,
-  STATE_PAUSED,
   STATE_ERROR,
 };
 
+// Pet modes (based on switch combinations)
 enum PetMode {
-  MODE_5_PETS = 0,
-  MODE_6_PETS = 1,
-  MODE_7_PETS = 2,
-  MODE_8_PETS = 3,
+  MODE_ONE = 0,
+  MODE_TWO = 1,
+  MODE_THREE = 2,
+  MODE_FOUR = 3,
 };
 
-// callbacks
+// Callback function types
 typedef void (*StartCallback)();
 typedef void (*ResetCallback)();
 typedef void (*ModeChangeCallback)(PetMode newMode, int petCount);
 
 class InputDisplay {
 private:
-  // display
+  // Display object
   Adafruit_SSD1306 display;
   
-  // system state
+  // System state
   SystemState currentState;
   PetMode currentMode;
   bool systemReady;
   bool missionActive;
   bool initialized;
   
-  // input state tracking
+  // Input state tracking
   struct {
-    // switch states
+    // Switch states
     bool switch1_current, switch1_last;
     bool switch2_current, switch2_last;
     
-    // start button - event debouncing
+    // START button - event-based debouncing
     bool start_last_state, start_current_state;
     unsigned long start_last_debounce_time;
     
-    // reset button - state debouncing  
+    // RESET button - state-based debouncing  
     bool reset_last_state, reset_current_state;
     unsigned long reset_last_debounce_time;
     
-    // reset hold timing
+    // Reset hold timing
     unsigned long reset_press_start;
     bool reset_hold_active;
     int reset_progress_percent;
     
-    // display timing
+    // Display timing
     unsigned long last_display_update;
     bool display_needs_update;
   } inputs;
   
-  // error tracking
+  // Error tracking
   String lastError;
   bool hasError;
   
-  // callbacks
+  // Callbacks
   StartCallback onStartCallback;
   ResetCallback onResetCallback;
   ModeChangeCallback onModeChangeCallback;
   
-  // helper methods
+  // Private helper methods
   bool debounceButtonPress(int pin, bool &lastState, bool &currentState, unsigned long &lastDebounceTime);
   bool debounceButtonState(int pin, bool &lastState, bool &currentState, unsigned long &lastDebounceTime);
   void updateSwitches();
@@ -99,18 +99,20 @@ private:
   void handleStartPress();
   void handleResetComplete();
   void displayErrorScreen();
-  void drawResetProgressBar();
-  String getStateString(SystemState state);
+  void drawFullScreenResetBar();
+  String getStateString(SystemState state) const;
   void handleDisplayError(const String& error);
 
 public:
+  // Constructor
   InputDisplay();
   
+  // Core functionality
   bool init();
   void update();                  
   void forceDisplayUpdate();
   
-  // state management
+  // State management
   void setSystemState(SystemState state);
   void setReady(bool ready);
   void setMissionActive(bool active);
@@ -118,7 +120,6 @@ public:
   // Mode and configuration
   PetMode getCurrentMode() const;
   int getPetCount() const;
-  String getModeDescription() const;
   SystemState getSystemState() const { return currentState; }
   bool isSystemReady() const { return systemReady; }
   bool isMissionActive() const { return missionActive; }
@@ -129,22 +130,23 @@ public:
   void setResetCallback(ResetCallback callback);  
   void setModeChangeCallback(ModeChangeCallback callback);
   
+  // Display management
   void updateDisplayContent();
   void showMessage(const String& title, const String& message, int displayTime = 2000);
   void showError(const String& error);
   void clearErrors();
   
-  // communication helpers
+  // Communication helpers
   void sendStartCommand();
   void sendResetCommand();
   void sendStatusUpdate();
   
-  // debug
+  // Debug and utility
   void printStatus();
   void testDisplay();
   bool isSystemHealthy() const;
   
-  // input reading
+  // Direct input reading (for debugging)
   bool getSwitch1State() const { return inputs.switch1_current; }
   bool getSwitch2State() const { return inputs.switch2_current; }
   bool getStartButtonState() const { return inputs.start_current_state == LOW; }
@@ -152,4 +154,4 @@ public:
   int getResetProgress() const { return inputs.reset_progress_percent; }
 };
 
-#endif
+#endif // INPUT_DISPLAY_H
