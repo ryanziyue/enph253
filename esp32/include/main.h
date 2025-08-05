@@ -38,13 +38,13 @@
 #define TARGET_POSITION         150.0
 #define CURRENT_POSITION        0.0
 #define BASE_SPEED              190
-#define SENSOR_THRESHOLD_R1     2.0
-#define SENSOR_THRESHOLD_L1     2.0
-#define SENSOR_THRESHOLD_R2     2.0
-#define SENSOR_THRESHOLD_L2     2.0
+#define SENSOR_THRESHOLD_R1     2.7
+#define SENSOR_THRESHOLD_L1     2.7
+#define SENSOR_THRESHOLD_R2     2.2
+#define SENSOR_THRESHOLD_L2     2.2
 
 // speed parameters
-#define MOTOR_MIN_SPEED         175
+#define MOTOR_MIN_SPEED         0
 #define MOTOR_MAX_SPEED         255
 #define IDX_BASE_SPEED          45.0
 #define IDX_SHOULDER_SPEED      30.0

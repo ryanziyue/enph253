@@ -5,6 +5,9 @@
 #include "linefollower.h"
 #include "pi.h"
 
+// NEW
+#include "input_display.h"
+
 // create controller instances
 ServoController arm;
 MotorController motors;
@@ -36,6 +39,9 @@ void setup() {
   sensorLineFollower.setSensorThreshold(LineFollower::L1, SENSOR_THRESHOLD_L1);
   sensorLineFollower.setSensorThreshold(LineFollower::R2, SENSOR_THRESHOLD_R2);
   sensorLineFollower.setSensorThreshold(LineFollower::L2, SENSOR_THRESHOLD_L2);
+
+  // NEW
+  initDisplayInputs();
   
   delay(1000);
   arm.resetPosition();
@@ -55,7 +61,10 @@ void loop() {
     command.trim();
     
     if (command.length() > 0) {
-      if (command.startsWith("PI:")) {
+      // NEW
+      if (command.equals("PI:READY")) {
+        setReady(true);
+      } else if (command.startsWith("PI:")) {
         // handle pi command
         PiResponse response = piComm.processCommand(command);
         piComm.sendResponse(response);
@@ -65,6 +74,8 @@ void loop() {
       }
     }
   }
+
+  // pollOtherInputs();
   
   delay(10);
 }
