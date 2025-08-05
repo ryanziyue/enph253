@@ -31,37 +31,125 @@ enum SystemState {
   STATE_READY,
   STATE_RUNNING,
   STATE_PAUSED,
-  STATE_ERROR
+  STATE_ERROR,
 };
 
 enum PetMode {
-  MODE_5_PETS = 0,    // SW1=LOW,  SW2=LOW  (binary: 00)
-  MODE_6_PETS = 1,    // SW1=HIGH, SW2=LOW  (binary: 01)
-  MODE_7_PETS = 2,    // SW1=LOW,  SW2=HIGH (binary: 10)
-  MODE_8_PETS = 3     // SW1=HIGH, SW2=HIGH (binary: 11)
+  MODE_5_PETS = 0,
+  MODE_6_PETS = 1,
+  MODE_7_PETS = 2,
+  MODE_8_PETS = 3,
 };
 
-// Display object
-extern Adafruit_SSD1306 display_handler;
+// callbacks
+typedef void (*StartCallback)();
+typedef void (*ResetCallback)();
+typedef void (*ModeChangeCallback)(PetMode newMode, int petCount);
 
-// “ready” flag
-extern bool ready;
+class InputDisplay {
+private:
+  // display
+  Adafruit_SSD1306 display;
+  
+  // system state
+  SystemState currentState;
+  PetMode currentMode;
+  bool systemReady;
+  bool missionActive;
+  bool initialized;
+  
+  // input state tracking
+  struct {
+    // switch states
+    bool switch1_current, switch1_last;
+    bool switch2_current, switch2_last;
+    
+    // start button - event debouncing
+    bool start_last_state, start_current_state;
+    unsigned long start_last_debounce_time;
+    
+    // reset button - state debouncing  
+    bool reset_last_state, reset_current_state;
+    unsigned long reset_last_debounce_time;
+    
+    // reset hold timing
+    unsigned long reset_press_start;
+    bool reset_hold_active;
+    int reset_progress_percent;
+    
+    // display timing
+    unsigned long last_display_update;
+    bool display_needs_update;
+  } inputs;
+  
+  // error tracking
+  String lastError;
+  bool hasError;
+  
+  // callbacks
+  StartCallback onStartCallback;
+  ResetCallback onResetCallback;
+  ModeChangeCallback onModeChangeCallback;
+  
+  // helper methods
+  bool debounceButtonPress(int pin, bool &lastState, bool &currentState, unsigned long &lastDebounceTime);
+  bool debounceButtonState(int pin, bool &lastState, bool &currentState, unsigned long &lastDebounceTime);
+  void updateSwitches();
+  void updateButtons();
+  void handleStartPress();
+  void handleResetComplete();
+  void displayErrorScreen();
+  void drawResetProgressBar();
+  String getStateString(SystemState state);
+  void handleDisplayError(const String& error);
 
-// initialize everything (call once from setup)
-void initDisplayInputs();
+public:
+  InputDisplay();
+  
+  bool init();
+  void update();                  
+  void forceDisplayUpdate();
+  
+  // state management
+  void setSystemState(SystemState state);
+  void setReady(bool ready);
+  void setMissionActive(bool active);
+  
+  // Mode and configuration
+  PetMode getCurrentMode() const;
+  int getPetCount() const;
+  String getModeDescription() const;
+  SystemState getSystemState() const { return currentState; }
+  bool isSystemReady() const { return systemReady; }
+  bool isMissionActive() const { return missionActive; }
+  bool isInitialized() const { return initialized; }
+  
+  // Callback registration
+  void setStartCallback(StartCallback callback);
+  void setResetCallback(ResetCallback callback);  
+  void setModeChangeCallback(ModeChangeCallback callback);
+  
+  void updateDisplayContent();
+  void showMessage(const String& title, const String& message, int displayTime = 2000);
+  void showError(const String& error);
+  void clearErrors();
+  
+  // communication helpers
+  void sendStartCommand();
+  void sendResetCommand();
+  void sendStatusUpdate();
+  
+  // debug
+  void printStatus();
+  void testDisplay();
+  bool isSystemHealthy() const;
+  
+  // input reading
+  bool getSwitch1State() const { return inputs.switch1_current; }
+  bool getSwitch2State() const { return inputs.switch2_current; }
+  bool getStartButtonState() const { return inputs.start_current_state == LOW; }
+  bool getResetButtonState() const { return inputs.reset_current_state == LOW; }
+  int getResetProgress() const { return inputs.reset_progress_percent; }
+};
 
-// call in loop()
-void pollOtherInputs();
-
-// set “ready” true/false
-void setReady(bool state);
-
-void updateLCD();
-
-// register a callback: void callback(bool newState)
-void onSwitch1Change(void (*cb)(bool));
-void onSwitch2Change(void (*cb)(bool));
-void onButton1Change(void (*cb)(bool));
-void onButton2Change(void (*cb)(bool));
-
-#endif // INPUT_DISPLAY_H
+#endif
