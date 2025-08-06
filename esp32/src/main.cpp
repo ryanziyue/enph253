@@ -72,13 +72,9 @@ void loop() {
   delay(10);
 }
 
-// ============================================================================
-// UPDATED LOCAL COMMANDS (Enhanced for InputDisplay)
-// ============================================================================
 void handleLocalCommand(String cmd) {
   cmd.toLowerCase();
   
-  // Existing commands (unchanged)
   if (cmd == "status") {
     printSystemStatus();
   }
@@ -97,7 +93,6 @@ void handleLocalCommand(String cmd) {
     piComm.sendResponse(response);
   }
   
-  // NEW: InputDisplay commands
   else if (cmd == "input" || cmd == "display") {
     inputDisplay.printStatus();
   }
@@ -153,19 +148,14 @@ void printSystemStatus() {
 // UPDATED EMERGENCY STOP (Enhanced)
 // ============================================================================
 void emergencyStop() {
-  Serial.println("🚨 EMERGENCY STOP ACTIVATED! 🚨");
+  Serial.println("EMERGENCY STOP ACTIVATED!");
 
-  // Stop all motion
   motors.stop();
   sensorLineFollower.stop();
   arm.stopAll();
   
-  // NEW: Update InputDisplay to show error
   inputDisplay.showError("EMERGENCY STOP");
   inputDisplay.setSystemState(STATE_ERROR);
 
-  // Send emergency command
   Serial.println("ESP:EMERGENCY_STOP");
-  
-  Serial.println("All systems halted - reset required");
 }
