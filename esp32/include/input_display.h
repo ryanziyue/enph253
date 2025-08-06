@@ -76,6 +76,7 @@ private:
     unsigned long reset_press_start;
     bool reset_hold_active;
     int reset_progress_percent;
+    bool reset_needs_release;
     
     // Display timing
     unsigned long last_display_update;
@@ -141,11 +142,10 @@ public:
   void sendResetCommand();
   void sendStatusUpdate();
   
-  // Debug and utility
   void printStatus();
   void testDisplay();
   bool isSystemHealthy() const;
-  
+
   // Direct input reading (for debugging)
   bool getSwitch1State() const { return inputs.switch1_current; }
   bool getSwitch2State() const { return inputs.switch2_current; }
