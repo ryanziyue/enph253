@@ -16,82 +16,8 @@ InputDisplay inputDisplay;  // NEW: Create InputDisplay instance
 // System state
 bool systemInitialized = false;
 
-// ============================================================================
-// CALLBACK FUNCTIONS (NEW) - Connect InputDisplay to your systems
-// ============================================================================
-
-// Called when start button is pressed
-void onStartPressed() {
-  Serial.println("🚀 Start button callback - preparing systems");
-  
-  // Add any custom start preparation here
-  // For example:
-  // - Reset sensor calibration
-  // - Clear error states  
-  // - Initialize mission variables
-  
-  // The InputDisplay already sent ESP:START command to Pi
-  // Pi will handle the actual mission logic
-}
-
-// Called when reset is completed (3-second hold)
-void onResetCompleted() {
-  Serial.println("🛑 Reset callback - cleaning up systems");
-  
-  // Stop everything locally (Pi also stops via ESP:RESET command)
-  if (sensorLineFollower.isRunning()) {
-    sensorLineFollower.stop();
-  }
-  motors.stop();
-  arm.stopAll();
-  
-  // Return to safe position
-  delay(500);
-  arm.resetPosition();
-  
-  Serial.println("✓ Local systems reset completed");
-}
-
-// Called when mode switches change
-void onModeChanged(PetMode newMode, int petCount) {
-  Serial.print("🔄 Mode changed to: ");
-  Serial.print(petCount);
-  Serial.print(" pets");
-  
-  // Adjust system parameters based on mode
-  switch (newMode) {
-    case MODE_ONE:
-      // Basic mode - conservative settings
-      sensorLineFollower.setBaseSpeed(150);
-      arm.setMaxSpeed(IDX_SHOULDER_L, 25.0);
-      break;
-      
-    case MODE_TWO:
-      // Standard mode
-      sensorLineFollower.setBaseSpeed(175);
-      arm.setMaxSpeed(IDX_SHOULDER_L, 30.0);
-      break;
-      
-    case MODE_THREE:
-      // Advanced mode - faster
-      sensorLineFollower.setBaseSpeed(200);
-      arm.setMaxSpeed(IDX_SHOULDER_L, 35.0);
-      break;
-      
-    case MODE_FOUR:
-      // Expert mode - maximum speed
-      sensorLineFollower.setBaseSpeed(225);
-      arm.setMaxSpeed(IDX_SHOULDER_L, 40.0);
-      break;
-  }
-}
-
-// ============================================================================
-// SETUP FUNCTION
-// ============================================================================
 void setup() {
   Serial.begin(115200);
-  Serial.println("🚀 Team 12 Robot Starting Up...");
   
   // Initialize core controllers (existing code)
   motors.init();
@@ -113,25 +39,15 @@ void setup() {
 
   // NEW: Initialize InputDisplay system
   if (!inputDisplay.init()) {
-    Serial.println("❌ CRITICAL: InputDisplay initialization failed!");
-    Serial.println("Check OLED and button connections");
-    // Could add emergency fallback mode here
     return;
   }
-  
-  // NEW: Register callback functions to connect InputDisplay with your systems
-  inputDisplay.setStartCallback(onStartPressed);
-  inputDisplay.setResetCallback(onResetCompleted);
-  inputDisplay.setModeChangeCallback(onModeChanged);
   
   delay(1000);
   arm.resetPosition();
   
   systemInitialized = true;
-  inputDisplay.setReady(true);  // NEW: Signal system ready to InputDisplay
+  inputDisplay.setReady(true); 
   
-  Serial.println("✅ All systems initialized successfully!");
-  Serial.println("Ready for mission - use switches to select mode, press START to begin");
 }
 
 // ============================================================================
