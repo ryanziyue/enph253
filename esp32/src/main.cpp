@@ -125,9 +125,6 @@ void handleLocalCommand(String cmd) {
   }
 }
 
-// ============================================================================
-// UPDATED SYSTEM STATUS (Enhanced)
-// ============================================================================
 void printSystemStatus() {
   Serial.println("\n=== COMPLETE SYSTEM STATUS ===");
   Serial.print("System Initialized: "); Serial.println(systemInitialized ? "Yes" : "No");
@@ -144,9 +141,6 @@ void printSystemStatus() {
   Serial.println("===============================\n");
 }
 
-// ============================================================================
-// UPDATED EMERGENCY STOP (Enhanced)
-// ============================================================================
 void emergencyStop() {
   Serial.println("EMERGENCY STOP ACTIVATED!");
 
