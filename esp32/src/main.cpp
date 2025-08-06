@@ -19,15 +19,12 @@ bool systemInitialized = false;
 void setup() {
   Serial.begin(115200);
   
-  // Initialize core controllers (existing code)
   motors.init();
   arm.init();
   
-  // Configure motor parameters (existing code)
   motors.setMinSpeed(MOTOR_MIN_SPEED);
   motors.setMaxSpeed(MOTOR_MAX_SPEED);  
   
-  // Configure line follower (existing code)  
   sensorLineFollower.setBaseSpeed(BASE_SPEED);
   sensorLineFollower.setTargetPosition(TARGET_POSITION);
   sensorLineFollower.setPID(K_P, K_I, K_D);
@@ -37,7 +34,6 @@ void setup() {
   sensorLineFollower.setSensorThreshold(LineFollower::R2, SENSOR_THRESHOLD_R2);
   sensorLineFollower.setSensorThreshold(LineFollower::L2, SENSOR_THRESHOLD_L2);
 
-  // NEW: Initialize InputDisplay system
   if (!inputDisplay.init()) {
     return;
   }
@@ -47,30 +43,23 @@ void setup() {
   
   systemInitialized = true;
   inputDisplay.setReady(true); 
-  
 }
 
-// ============================================================================
-// MAIN LOOP (Updated to use InputDisplay)
-// ============================================================================
 void loop() {
   if (!systemInitialized) return;
   
-  // Core system updates
-  arm.update();                // Existing: Update arm controller
-  inputDisplay.update();       // NEW: Update input/display system
+  arm.update();
+  inputDisplay.update();
   
-  // Handle serial commands (existing code - works with ESP commands now!)
   if (Serial.available()) {
     String command = Serial.readStringUntil('\n');
     command.trim();
     
     if (command.length() > 0) {
       if (command.equals("PI:READY")) {
-        inputDisplay.setReady(true);  // NEW: Update InputDisplay
+        inputDisplay.setReady(true);
       } 
       else if (command.startsWith("PI:") || command.startsWith("ESP:")) {
-        // Existing Pi command handling - now also handles ESP commands!
         PiResponse response = piComm.processCommand(command);
         piComm.sendResponse(response);
       } 
