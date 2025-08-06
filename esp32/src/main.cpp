@@ -4,14 +4,14 @@
 #include "motor.h"
 #include "linefollower.h"
 #include "pi.h"
-#include "input_display.h"  // NEW: Add InputDisplay
+#include "input_display.h"
 
 // Create controller instances
 ServoController arm;
 MotorController motors;
 LineFollower sensorLineFollower(&motors);
 PiComm piComm(&motors, &arm, &sensorLineFollower);
-InputDisplay inputDisplay;  // NEW: Create InputDisplay instance
+InputDisplay inputDisplay;
 
 // System state
 bool systemInitialized = false;
