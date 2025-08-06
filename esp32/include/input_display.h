@@ -9,10 +9,10 @@
 // Pin assignments
 #define SWITCH_1_PIN        8
 #define SWITCH_2_PIN        7
-#define BUTTON_START_PIN    25
-#define BUTTON_RESET_PIN    26
-#define SDA_PIN             9
-#define SCK_PIN             10
+#define BUTTON_START_PIN    26
+#define BUTTON_RESET_PIN    25
+#define SDA_PIN             10
+#define SCK_PIN             9
 
 // OLED display settings
 #define SCREEN_WIDTH        128
@@ -23,7 +23,7 @@
 // Timing constants
 #define DEBOUNCE_DELAY      50
 #define RESET_HOLD_TIME     1000  
-#define DISPLAY_UPDATE_MS   100   
+#define DISPLAY_UPDATE_MS   200   
 
 // System states
 enum SystemState {

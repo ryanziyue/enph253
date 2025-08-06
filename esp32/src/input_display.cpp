@@ -1,8 +1,5 @@
 #include "input_display.h"
 
-// ============================================================================
-// CONSTRUCTOR
-// ============================================================================
 InputDisplay::InputDisplay() : 
   display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET),
   currentState(STATE_INIT),
@@ -37,24 +34,15 @@ InputDisplay::InputDisplay() :
   inputs.display_needs_update = true;
 }
 
-// ============================================================================
-// INITIALIZATION
-// ============================================================================
 bool InputDisplay::init() {
   Serial.println("=== Initializing InputDisplay System ===");
   
-  // Configure GPIO pins
   pinMode(SWITCH_1_PIN, INPUT_PULLUP);
   pinMode(SWITCH_2_PIN, INPUT_PULLUP);  
   pinMode(BUTTON_START_PIN, INPUT_PULLUP);
   pinMode(BUTTON_RESET_PIN, INPUT_PULLUP);
   
-  Serial.println("✓ GPIO pins configured");
-  
-  // Initialize I2C
   Wire.begin(SDA_PIN, SCK_PIN);
-  Serial.print("✓ I2C initialized: SDA="); Serial.print(SDA_PIN);
-  Serial.print(" SCK="); Serial.println(SCK_PIN);
   
   // Initialize OLED display
   if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS)) {
@@ -62,7 +50,6 @@ bool InputDisplay::init() {
     return false;
   }
   
-  // Configure display settings
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
@@ -77,9 +64,6 @@ bool InputDisplay::init() {
   display.println("Please wait...");
   display.display();
   
-  Serial.println("✓ OLED display initialized");
-  
-  // Read initial pin states
   inputs.switch1_current = digitalRead(SWITCH_1_PIN);
   inputs.switch1_last = inputs.switch1_current;
   inputs.switch2_current = digitalRead(SWITCH_2_PIN);
@@ -93,26 +77,20 @@ bool InputDisplay::init() {
   inputs.reset_current_state = inputs.reset_last_state;
   inputs.reset_last_debounce_time = millis();
   
-  // Set initial mode
   currentMode = getCurrentMode();
   
-  delay(2000);  // Show startup screen
+  delay(50);
   
-  // Mark as initialized and ready
+  // mark initialized state
   initialized = true;
   currentState = STATE_READY;
   systemReady = true;
   inputs.display_needs_update = true;
   
-  Serial.print("✓ Initial mode: "); Serial.print(getPetCount()); Serial.println(" pets");
-  Serial.println("=== InputDisplay System Ready ===");
-  
   return true;
 }
 
-// ============================================================================
-// MAIN UPDATE LOOP
-// ============================================================================
+
 void InputDisplay::update() {
   if (!initialized) return;
   
@@ -121,7 +99,7 @@ void InputDisplay::update() {
   updateSwitches();
   updateButtons();
   
-  // Update display if needed
+  // update display
   if (inputs.display_needs_update && (now - inputs.last_display_update) > DISPLAY_UPDATE_MS) {
     updateDisplayContent();
     inputs.last_display_update = now;
@@ -129,30 +107,20 @@ void InputDisplay::update() {
   }
 }
 
-// ============================================================================
-// INPUT HANDLING
-// ============================================================================
 void InputDisplay::updateSwitches() {
-  // LOCK: Completely ignore switch changes during mission execution
   if (currentState == STATE_RUNNING) {
-    // Still read the switches to keep internal state updated,
-    // but don't process any changes or call callbacks
     inputs.switch1_current = digitalRead(SWITCH_1_PIN);
     inputs.switch2_current = digitalRead(SWITCH_2_PIN);
     
-    // Update last states to prevent false triggers when mission ends
     inputs.switch1_last = inputs.switch1_current;
     inputs.switch2_last = inputs.switch2_current;
     
-    // Exit early - no mode processing during mission
     return;
   }
   
-  // Normal switch processing (only when NOT running)
   inputs.switch1_current = digitalRead(SWITCH_1_PIN);
   inputs.switch2_current = digitalRead(SWITCH_2_PIN);
   
-  // Check for mode changes
   if (inputs.switch1_current != inputs.switch1_last || 
       inputs.switch2_current != inputs.switch2_last) {
     
@@ -164,11 +132,6 @@ void InputDisplay::updateSwitches() {
       currentMode = newMode;
       inputs.display_needs_update = true;
       
-      Serial.print("Mode switched to: "); 
-      Serial.print(getPetCount()); 
-      Serial.println(" pets");
-      
-      // Call mode change callback if registered
       if (onModeChangeCallback) {
         onModeChangeCallback(currentMode, getPetCount());
       }
@@ -179,38 +142,31 @@ void InputDisplay::updateSwitches() {
 void InputDisplay::updateButtons() {
   unsigned long now = millis();
   
-  // Handle START button - EVENT-based (triggers once per press)
+  // start button - event-based
   if (debounceButtonPress(BUTTON_START_PIN, inputs.start_last_state, inputs.start_current_state, inputs.start_last_debounce_time)) {
     handleStartPress();
   }
   
-  // Handle RESET button - STATE-based (detects hold duration)
+  // reset button - state-based
   bool resetCurrentlyPressed = debounceButtonState(BUTTON_RESET_PIN, inputs.reset_last_state, inputs.reset_current_state, inputs.reset_last_debounce_time);
   
-  // Check if button was released (clear the needs_release flag)
   if (!resetCurrentlyPressed && inputs.reset_needs_release) {
     inputs.reset_needs_release = false;
-    Serial.println("Reset button released - ready for new reset");
   }
   
-  // Reset button just pressed (but only if we don't need a release first)
   if (resetCurrentlyPressed && !inputs.reset_hold_active && !inputs.reset_needs_release) {
     inputs.reset_press_start = now;
     inputs.reset_hold_active = true;
     inputs.reset_progress_percent = 0;
     inputs.display_needs_update = true;
-    Serial.println("Reset button pressed - hold for 3 seconds");
   }
   
-  // Reset button just released (cancel ongoing reset)
   if (!resetCurrentlyPressed && inputs.reset_hold_active) {
     inputs.reset_hold_active = false;
     inputs.reset_progress_percent = 0;
     inputs.display_needs_update = true;
-    Serial.println("Reset cancelled");
   }
   
-  // Handle reset hold progress
   if (inputs.reset_hold_active && resetCurrentlyPressed) {
     unsigned long holdTime = now - inputs.reset_press_start;
     int newProgress = map(holdTime, 0, RESET_HOLD_TIME, 0, 100);
@@ -221,19 +177,15 @@ void InputDisplay::updateButtons() {
       inputs.display_needs_update = true;
     }
     
-    // Reset hold complete
     if (holdTime >= RESET_HOLD_TIME) {
       inputs.reset_hold_active = false;
       inputs.reset_progress_percent = 0;
-      inputs.reset_needs_release = true;  // ← REQUIRE RELEASE BEFORE NEW RESET
+      inputs.reset_needs_release = true;
       handleResetComplete();
     }
   }
 }
 
-// ============================================================================
-// BUTTON DEBOUNCING (Your preferred method)
-// ============================================================================
 bool InputDisplay::debounceButtonPress(int pin, bool &lastState, bool &currentState, unsigned long &lastDebounceTime) {
   bool reading = digitalRead(pin);
   
@@ -272,11 +224,7 @@ bool InputDisplay::debounceButtonState(int pin, bool &lastState, bool &currentSt
   return (currentState == LOW);
 }
 
-// ============================================================================
-// BUTTON EVENT HANDLERS
-// ============================================================================
 void InputDisplay::handleStartPress() {
-  Serial.println("START button pressed");
   
   switch (currentState) {
     case STATE_READY:
@@ -292,7 +240,6 @@ void InputDisplay::handleStartPress() {
       display.display();
       delay(1200);
       
-      Serial.print("Starting mission: "); Serial.print(getPetCount()); Serial.println(" pets");
       setSystemState(STATE_RUNNING);
       sendStartCommand();
       
@@ -302,7 +249,6 @@ void InputDisplay::handleStartPress() {
       break;
       
     case STATE_RUNNING:
-      // Show already running message
       display.clearDisplay();
       display.setCursor(0, 20);
       display.setTextSize(1);
@@ -311,30 +257,24 @@ void InputDisplay::handleStartPress() {
       display.display();
       delay(1000);
       inputs.display_needs_update = true;
-      Serial.println("Mission already running");
       break;
       
     case STATE_INIT:
-      Serial.println("System not ready");
       break;
       
     case STATE_ERROR:
-      Serial.println("System error - cannot start");
       break;
   }
 }
 
 void InputDisplay::handleResetComplete() {
-  Serial.println("Reset complete");
-  
-  // Show reset complete message
   display.clearDisplay();
   display.setCursor(0, 20);
   display.setTextSize(2);
   display.println("RESET");
   display.println("COMPLETE");
   display.display();
-  delay(200);
+  delay(1500);
   
   switch (currentState) {
     case STATE_RUNNING:
@@ -344,23 +284,18 @@ void InputDisplay::handleResetComplete() {
       break;
       
     default:
-      // Already in ready or init state
       break;
   }
   
   inputs.display_needs_update = true;
 }
 
-// ============================================================================
-// DISPLAY MANAGEMENT
-// ============================================================================
 void InputDisplay::updateDisplayContent() {
   if (currentState == STATE_ERROR) {
     displayErrorScreen();
     return;
   }
   
-  // If reset is active, show ONLY the full-screen reset bar
   if (inputs.reset_hold_active) {
     drawFullScreenResetBar();
     return;
@@ -369,12 +304,10 @@ void InputDisplay::updateDisplayContent() {
   display.clearDisplay();
   display.setCursor(0, 5);
   
-  // Mission info - same text size for "Mission:" and pet count
   display.setTextSize(2);
   display.print(getPetCount());
   display.println(" pets");
   
-  // System status and instructions
   switch (currentState) {
     case STATE_INIT:
       display.println("initializing...");
@@ -411,16 +344,13 @@ void InputDisplay::drawFullScreenResetBar() {
   int barWidth = SCREEN_WIDTH - 8;
   int fillWidth = map(inputs.reset_progress_percent, 0, 100, 0, barWidth);
   
-  // Draw border
   display.drawRect(4, barY, barWidth, barHeight, SSD1306_WHITE);
   display.drawRect(3, barY-1, barWidth+2, barHeight+2, SSD1306_WHITE);
   
-  // Draw fill
   if (fillWidth > 2) {
     display.fillRect(5, barY+1, fillWidth-2, barHeight-2, SSD1306_WHITE);
   }
   
-  // Percentage
   display.setCursor(0, barY + barHeight + 5);
   display.print("Progress: ");
   display.print(inputs.reset_progress_percent);
@@ -454,11 +384,6 @@ void InputDisplay::setSystemState(SystemState state) {
     SystemState oldState = currentState;
     currentState = state;
     inputs.display_needs_update = true;
-    
-    Serial.print("State: ");
-    Serial.print(getStateString(oldState));
-    Serial.print(" → ");
-    Serial.println(getStateString(state));
     
     switch (state) {
       case STATE_RUNNING:
@@ -525,9 +450,6 @@ int InputDisplay::getPetCount() const {
   }
 }
 
-// ============================================================================
-// CALLBACK REGISTRATION
-// ============================================================================
 void InputDisplay::setStartCallback(StartCallback callback) {
   onStartCallback = callback;
 }
