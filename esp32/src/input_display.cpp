@@ -32,6 +32,7 @@ InputDisplay::InputDisplay() :
   
   inputs.reset_hold_active = false;
   inputs.reset_progress_percent = 0;
+  inputs.reset_needs_release = false;
   inputs.last_display_update = 0;
   inputs.display_needs_update = true;
 }
@@ -67,7 +68,6 @@ bool InputDisplay::init() {
   display.setTextColor(SSD1306_WHITE);
   display.setRotation(0);
   
-  // Show clean startup screen (no "TEAM 12")
   display.setCursor(0, 5);
   display.setTextSize(2);
   display.println("Robot");
@@ -172,8 +172,14 @@ void InputDisplay::updateButtons() {
   // Handle RESET button - STATE-based (detects hold duration)
   bool resetCurrentlyPressed = debounceButtonState(BUTTON_RESET_PIN, inputs.reset_last_state, inputs.reset_current_state, inputs.reset_last_debounce_time);
   
-  // Reset button just pressed
-  if (resetCurrentlyPressed && !inputs.reset_hold_active) {
+  // Check if button was released (clear the needs_release flag)
+  if (!resetCurrentlyPressed && inputs.reset_needs_release) {
+    inputs.reset_needs_release = false;
+    Serial.println("Reset button released - ready for new reset");
+  }
+  
+  // Reset button just pressed (but only if we don't need a release first)
+  if (resetCurrentlyPressed && !inputs.reset_hold_active && !inputs.reset_needs_release) {
     inputs.reset_press_start = now;
     inputs.reset_hold_active = true;
     inputs.reset_progress_percent = 0;
@@ -181,7 +187,7 @@ void InputDisplay::updateButtons() {
     Serial.println("Reset button pressed - hold for 3 seconds");
   }
   
-  // Reset button just released
+  // Reset button just released (cancel ongoing reset)
   if (!resetCurrentlyPressed && inputs.reset_hold_active) {
     inputs.reset_hold_active = false;
     inputs.reset_progress_percent = 0;
@@ -204,6 +210,7 @@ void InputDisplay::updateButtons() {
     if (holdTime >= RESET_HOLD_TIME) {
       inputs.reset_hold_active = false;
       inputs.reset_progress_percent = 0;
+      inputs.reset_needs_release = true;  // ← REQUIRE RELEASE BEFORE NEW RESET
       handleResetComplete();
     }
   }
@@ -265,7 +272,6 @@ void InputDisplay::handleStartPress() {
       display.println("STARTING");
       display.setTextSize(1);
       display.println();
-      display.print("Mission: ");
       display.print(getPetCount());
       display.println(" pets");
       display.display();
@@ -313,7 +319,7 @@ void InputDisplay::handleResetComplete() {
   display.println("RESET");
   display.println("COMPLETE");
   display.display();
-  delay(1500);
+  delay(200);
   
   switch (currentState) {
     case STATE_RUNNING:
@@ -346,11 +352,10 @@ void InputDisplay::updateDisplayContent() {
   }
   
   display.clearDisplay();
-  display.setCursor(0, 0);
+  display.setCursor(0, 5);
   
   // Mission info - same text size for "Mission:" and pet count
   display.setTextSize(2);
-  display.println("Mission:");
   display.print(getPetCount());
   display.println(" PETS");
   
@@ -361,26 +366,15 @@ void InputDisplay::updateDisplayContent() {
   // System status and instructions
   switch (currentState) {
     case STATE_INIT:
-      display.println("Initializing...");
-      display.println("Please wait");
+      display.println("initializing...");
       break;
       
     case STATE_READY:
-      display.println("READY TO START");
-      display.println();
-      display.println("Press START button");
-      display.println("to begin mission");
+      display.println("ready to start");
       break;
       
     case STATE_RUNNING:
-      display.println("MISSION RUNNING");
-      display.println();
-      display.print("Target: ");
-      display.print(getPetCount());
-      display.println(" pets");
-      display.println();
-      display.println("Hold RESET for 3s");
-      display.println("to stop");
+      display.println("mission running");
       break;
   }
   
@@ -388,21 +382,18 @@ void InputDisplay::updateDisplayContent() {
 }
 
 void InputDisplay::drawFullScreenResetBar() {
-  // Full screen reset display
   display.clearDisplay();
   
   // Title
   display.setCursor(0, 5);
   display.setTextSize(2);
-  display.println("RESETTING");
+  display.print("RESETTING");
   
   display.setTextSize(1);
   display.println();
-  display.println("Hold to confirm");
-  display.println("Release to cancel");
   
   // Large progress bar
-  int barY = 35;
+  int barY = 25;
   int barHeight = 20;
   int barWidth = SCREEN_WIDTH - 8;
   int fillWidth = map(inputs.reset_progress_percent, 0, 100, 0, barWidth);
