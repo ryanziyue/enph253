@@ -133,7 +133,22 @@ void InputDisplay::update() {
 // INPUT HANDLING
 // ============================================================================
 void InputDisplay::updateSwitches() {
-  // Read switch states
+  // LOCK: Completely ignore switch changes during mission execution
+  if (currentState == STATE_RUNNING) {
+    // Still read the switches to keep internal state updated,
+    // but don't process any changes or call callbacks
+    inputs.switch1_current = digitalRead(SWITCH_1_PIN);
+    inputs.switch2_current = digitalRead(SWITCH_2_PIN);
+    
+    // Update last states to prevent false triggers when mission ends
+    inputs.switch1_last = inputs.switch1_current;
+    inputs.switch2_last = inputs.switch2_current;
+    
+    // Exit early - no mode processing during mission
+    return;
+  }
+  
+  // Normal switch processing (only when NOT running)
   inputs.switch1_current = digitalRead(SWITCH_1_PIN);
   inputs.switch2_current = digitalRead(SWITCH_2_PIN);
   
@@ -357,11 +372,7 @@ void InputDisplay::updateDisplayContent() {
   // Mission info - same text size for "Mission:" and pet count
   display.setTextSize(2);
   display.print(getPetCount());
-  display.println(" PETS");
-  
-  // Back to normal text size
-  display.setTextSize(1);
-  display.println(); // Add spacing
+  display.println(" pets");
   
   // System status and instructions
   switch (currentState) {
@@ -370,11 +381,13 @@ void InputDisplay::updateDisplayContent() {
       break;
       
     case STATE_READY:
-      display.println("ready to start");
+      display.println("ready to");
+      display.println("start");
       break;
       
     case STATE_RUNNING:
-      display.println("mission running");
+      display.println("mission");
+      display.println("running");
       break;
   }
   
@@ -387,7 +400,7 @@ void InputDisplay::drawFullScreenResetBar() {
   // Title
   display.setCursor(0, 5);
   display.setTextSize(2);
-  display.print("RESETTING");
+  display.print("resetting");
   
   display.setTextSize(1);
   display.println();
@@ -486,20 +499,28 @@ void InputDisplay::setMissionActive(bool active) {
 // ============================================================================
 PetMode InputDisplay::getCurrentMode() const {
   // Read switch states (HIGH = not pressed with pullup)
-  bool sw1 = (digitalRead(SWITCH_1_PIN) == HIGH);
-  bool sw2 = (digitalRead(SWITCH_2_PIN) == HIGH);
-  
-  // Binary encoding: SW2 is MSB, SW1 is LSB
-  int modeValue = (sw2 << 1) | sw1;
-  return (PetMode)constrain(modeValue, 0, 3);
+  bool sw1 = (!digitalRead(SWITCH_1_PIN) == HIGH);
+  bool sw2 = (!digitalRead(SWITCH_2_PIN) == HIGH);
+
+  int mode = 0;
+
+  if (sw1) {
+    mode += 1;
+  }
+
+  if (sw2) {
+    mode += 2;
+  }
+
+  return (PetMode)constrain(mode, 0, 3);
 }
 
 int InputDisplay::getPetCount() const {
   switch (currentMode) {
-    case MODE_ONE: return 5;
-    case MODE_TWO: return 6;
-    case MODE_THREE: return 7;
-    case MODE_FOUR: return 0;  // As per your original code
+    case MODE_ONE: return 2;
+    case MODE_TWO: return 5;
+    case MODE_THREE: return 6;
+    case MODE_FOUR: return 7;  // As per your original code
     default: return 7;
   }
 }
@@ -602,19 +623,6 @@ void InputDisplay::printStatus() {
   Serial.print("System Ready: "); Serial.println(systemReady ? "YES" : "NO");
   Serial.print("Mission Active: "); Serial.println(missionActive ? "YES" : "NO");
   Serial.println("=============================");
-}
-
-void InputDisplay::testDisplay() {
-  Serial.println("Testing display...");
-  
-  SystemState testStates[] = {STATE_READY, STATE_RUNNING, STATE_ERROR};
-  for (int i = 0; i < 3; i++) {
-    setSystemState(testStates[i]);
-    delay(2000);
-  }
-  
-  setSystemState(STATE_READY);
-  Serial.println("Test complete");
 }
 
 bool InputDisplay::isSystemHealthy() const {
