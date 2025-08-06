@@ -1,5 +1,6 @@
 #include "pi.h"
 #include "main.h"
+#include "input_display.h"
 
 PiComm::PiComm(MotorController* motor_ctrl, ServoController* servo_ctrl, LineFollower* line_follower) 
   : motors(motor_ctrl), servos(servo_ctrl), lineFollower(line_follower) {}
@@ -443,7 +444,24 @@ PiResponse PiComm::handleStatusRequest(const String& cmd) {
 }
 
 // ------- MISSION COMMANDS ------- 
+PiResponse PiComm::handleMissionComplete(const String& cmd) {
+  if (lineFollower && lineFollower->isRunning()) {
+    lineFollower->stop();
+  }
 
+  if (motors) {
+    motors->stop();
+  }
+
+  if (servos) {
+    servos->stopAll();
+  }
+
+  extern InputDisplay inputDisplay;
+  inputDisplay.setMissionActive(false);
+
+  return PiResponse(true, "Mission completed - system returned to ready state");
+}
 
 // replies to PI command
 void PiComm::sendResponse(const PiResponse& response) {
