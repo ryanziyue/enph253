@@ -59,12 +59,11 @@ void loop() {
       if (command.equals("PI:READY")) {
         inputDisplay.setReady(true);
       } 
-      else if (command.startsWith("PI:") || command.startsWith("ESP:")) {
+      else if (command.startsWith("PI:")) {
         PiResponse response = piComm.processCommand(command);
         piComm.sendResponse(response);
       } 
       else {
-        // Local command handling
         handleLocalCommand(command);
       }
     }
