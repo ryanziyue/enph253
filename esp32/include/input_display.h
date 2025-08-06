@@ -6,16 +6,13 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-// Forward declaration
-class PiComm;
-
 // Pin assignments
 #define SWITCH_1_PIN        8
 #define SWITCH_2_PIN        7
-#define BUTTON_START_PIN    25
-#define BUTTON_RESET_PIN    26
-#define SDA_PIN             9
-#define SCK_PIN             10
+#define BUTTON_START_PIN    26
+#define BUTTON_RESET_PIN    25
+#define SDA_PIN             10
+#define SCK_PIN             9
 
 // OLED display settings
 #define SCREEN_WIDTH        128
@@ -44,6 +41,11 @@ enum PetMode {
   MODE_FOUR = 3,
 };
 
+// Callback function types
+typedef void (*StartCallback)();
+typedef void (*ResetCallback)();
+typedef void (*ModeChangeCallback)(PetMode newMode, int petCount);
+
 class InputDisplay {
 private:
   // Display object
@@ -56,9 +58,6 @@ private:
   bool missionActive;
   bool initialized;
   
-  // Communication
-  PiComm* piComm;
-
   // Input state tracking
   struct {
     // Switch states
@@ -101,8 +100,8 @@ private:
   void handleDisplayError(const String& error);
 
 public:
-  // Constructor - now takes PiComm pointer
-  InputDisplay(PiComm* piCommPtr);
+  // Constructor
+  InputDisplay();
   
   // Core functionality
   bool init();
@@ -122,17 +121,21 @@ public:
   bool isMissionActive() const { return missionActive; }
   bool isInitialized() const { return initialized; }
   
+  // Callback registration
+  void setStartCallback(StartCallback callback);
+  void setResetCallback(ResetCallback callback);  
+  void setModeChangeCallback(ModeChangeCallback callback);
+  
   // Display management
   void updateDisplayContent();
   void showMessage(const String& title, const String& message, int displayTime = 2000);
   void showError(const String& error);
   void clearErrors();
   
-  // Communication helpers - now use PiComm directly
+  // Communication helpers
   void sendStartCommand();
   void sendResetCommand();
   void sendStatusUpdate();
-  void handleModeChange(PetMode newMode, int petCount);
   
   void printStatus();
   bool isSystemHealthy() const;
