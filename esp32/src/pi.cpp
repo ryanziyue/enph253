@@ -442,6 +442,9 @@ PiResponse PiComm::handleStatusRequest(const String& cmd) {
   return PiResponse(true, "System status", statusData);
 }
 
+// ------- MISSION COMMANDS ------- 
+
+
 // replies to PI command
 void PiComm::sendResponse(const PiResponse& response) {
   if (response.success) {
