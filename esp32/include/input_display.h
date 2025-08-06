@@ -7,8 +7,8 @@
 #include <Adafruit_SSD1306.h>
 
 // Pin assignments
-#define SWITCH_1_PIN        7
-#define SWITCH_2_PIN        8
+#define SWITCH_1_PIN        8
+#define SWITCH_2_PIN        7
 #define BUTTON_START_PIN    25
 #define BUTTON_RESET_PIN    26
 #define SDA_PIN             9
@@ -22,7 +22,7 @@
 
 // Timing constants
 #define DEBOUNCE_DELAY      50
-#define RESET_HOLD_TIME     3000  
+#define RESET_HOLD_TIME     1000  
 #define DISPLAY_UPDATE_MS   100   
 
 // System states
@@ -143,7 +143,6 @@ public:
   void sendStatusUpdate();
   
   void printStatus();
-  void testDisplay();
   bool isSystemHealthy() const;
 
   // Direct input reading (for debugging)
