@@ -34,7 +34,6 @@ private:
   PiResponse handleMotorCommand(const String& cmd);                 // PI:MC,x,y
   PiResponse handleMotorSampleCommand(const String& cmd);           // PI:MS
 
-  
   // command parsing helpers - ARM CONTROL
   PiResponse handleServoPositionCommand(const String& cmd);         // PI:SP,a,b,c
   PiResponse handleWristPositionCommand(const String& cmd);         // PI:WP,a
