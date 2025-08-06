@@ -1,17 +1,16 @@
 #include "input_display.h"
-#include "pi.h"
 
-InputDisplay::InputDisplay(PiComm* piCommPtr) : 
+InputDisplay::InputDisplay() : 
   display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET),
   currentState(STATE_INIT),
   currentMode(MODE_ONE),
   systemReady(false),
   missionActive(false),
   initialized(false),
-  piComm(piCommPtr),
   lastError(""),
   hasError(false) {
   
+  // Initialize input structure
   inputs.switch1_current = false;
   inputs.switch1_last = false;
   inputs.switch2_current = false;
@@ -42,6 +41,7 @@ bool InputDisplay::init() {
   
   Wire.begin(SDA_PIN, SCK_PIN);
   
+  // Initialize OLED display
   if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS)) {
     handleDisplayError("OLED initialization failed");
     return false;
@@ -87,6 +87,7 @@ bool InputDisplay::init() {
   return true;
 }
 
+
 void InputDisplay::update() {
   if (!initialized) return;
   
@@ -127,8 +128,6 @@ void InputDisplay::updateSwitches() {
     if (newMode != currentMode) {
       currentMode = newMode;
       inputs.display_needs_update = true;
-      
-      handleModeChange(newMode, getPetCount());
     }
   }
 }
@@ -219,6 +218,7 @@ bool InputDisplay::debounceButtonState(int pin, bool &lastState, bool &currentSt
 }
 
 void InputDisplay::handleStartPress() {
+  
   switch (currentState) {
     case STATE_READY:
       // Show starting message
@@ -235,6 +235,7 @@ void InputDisplay::handleStartPress() {
       
       setSystemState(STATE_RUNNING);
       sendStartCommand();
+      
       break;
       
     case STATE_RUNNING:
@@ -249,6 +250,8 @@ void InputDisplay::handleStartPress() {
       break;
       
     case STATE_INIT:
+      break;
+      
     case STATE_ERROR:
       break;
   }
@@ -261,13 +264,15 @@ void InputDisplay::handleResetComplete() {
   display.println("RESET");
   display.println("COMPLETE");
   display.display();
-  delay(1500);
+  delay(200);
   
   switch (currentState) {
     case STATE_RUNNING:
+      setSystemState(STATE_READY);
+      sendResetCommand();
+      break;
     case STATE_ERROR:
       clearErrors();
-      sendResetCommand();
       setSystemState(STATE_READY);
       break;
       
@@ -433,173 +438,29 @@ int InputDisplay::getPetCount() const {
     case MODE_ONE: return 2;
     case MODE_TWO: return 5;
     case MODE_THREE: return 6;
-    case MODE_FOUR: return 7;
+    case MODE_FOUR: return 7;  // As per your original code
     default: return 7;
   }
 }
 
 // ============================================================================
-// COMMUNICATION HELPERS - Use PiComm directly for everything
+// COMMUNICATION HELPERS
 // ============================================================================
 void InputDisplay::sendStartCommand() {
-  if (!piComm) {
-    Serial.println("ERROR: PiComm not available");
-    return;
-  }
-  
-  Serial.println("🚀 Starting mission with " + String(getPetCount()) + " pets");
-  
-  // Configure systems based on mode using PiComm directly
-  int baseSpeed = 150;
-  float shoulderMaxSpeed = 30.0;
-  
-  switch (currentMode) {
-    case MODE_ONE: 
-      baseSpeed = 150; 
-      shoulderMaxSpeed = 25.0;
-      break;
-    case MODE_TWO: 
-      baseSpeed = 175; 
-      shoulderMaxSpeed = 30.0;
-      break;
-    case MODE_THREE: 
-      baseSpeed = 200; 
-      shoulderMaxSpeed = 35.0;
-      break;
-    case MODE_FOUR: 
-      baseSpeed = 225; 
-      shoulderMaxSpeed = 40.0;
-      break;
-  }
-  
-  // Configure line follower base speed
-  PiResponse response = piComm->processCommand("PI:LBS," + String(baseSpeed));
-  if (!response.success) {
-    Serial.println("Warning: Failed to set base speed - " + response.message);
-  }
-  
-  // Set shoulder max speed
-  response = piComm->processCommand("PI:SMS,-," + String(shoulderMaxSpeed) + ",-,-");
-  if (!response.success) {
-    Serial.println("Warning: Failed to set shoulder max speed - " + response.message);
-  }
-  
-  // Reset arm to home position
-  response = piComm->processCommand("PI:SP,90,90,90");  // Base, Shoulder, Elbow to home
-  if (!response.success) {
-    Serial.println("Warning: Failed to reset arm - " + response.message);
-  }
-  
-  // Enable wrist lock at horizontal
-  response = piComm->processCommand("PI:WLT,1");
-  if (!response.success) {
-    Serial.println("Warning: Failed to enable wrist lock - " + response.message);
-  }
-  
-  Serial.println("✓ Robot configured and ready for " + String(getPetCount()) + " pets mission");
+  String command = "ESP:START," + String(getPetCount());
+  Serial.println(command);
 }
 
 void InputDisplay::sendResetCommand() {
-  if (!piComm) {
-    Serial.println("ERROR: PiComm not available");
-    return;
-  }
-  
-  Serial.println("🛑 Resetting all systems");
-  
-  PiResponse response;
-  
-  // Stop line following
-  response = piComm->processCommand("PI:LF,0");
-  if (!response.success) {
-    Serial.println("Warning: Failed to stop line follower - " + response.message);
-  }
-  
-  // Stop motors
-  response = piComm->processCommand("PI:MC,0,0");
-  if (!response.success) {
-    Serial.println("Warning: Failed to stop motors - " + response.message);
-  }
-  
-  // Stop all servo motion
-  response = piComm->processCommand("PI:SS,0,0,0,0");
-  if (!response.success) {
-    Serial.println("Warning: Failed to stop servo motion - " + response.message);
-  }
-  
-  // Reset arm to home position
-  response = piComm->processCommand("PI:SP,90,90,90");
-  if (!response.success) {
-    Serial.println("Warning: Failed to reset arm - " + response.message);
-  }
-  
-  // Close claw
-  response = piComm->processCommand("PI:CP,90");
-  if (!response.success) {
-    Serial.println("Warning: Failed to reset claw - " + response.message);
-  }
-  
-  Serial.println("✓ All systems reset completed");
+  Serial.println("ESP:RESET");
 }
 
 void InputDisplay::sendStatusUpdate() {
-  if (!piComm) {
-    Serial.println("Status: PiComm not available");
-    return;
-  }
-  
-  // Get system status via PiComm
-  PiResponse response = piComm->processCommand("PI:STATUS");
-  if (response.success) {
-    Serial.println("System Status: " + response.data);
-  }
-  
-  // Add InputDisplay specific status
-  Serial.println("InputDisplay: State=" + getStateString(currentState) + 
-                " Mode=" + String(getPetCount()) + "pets " +
-                (missionActive ? "ACTIVE" : "IDLE"));
-}
-
-void InputDisplay::handleModeChange(PetMode newMode, int petCount) {
-  Serial.print("🔄 Mode changed to: ");
-  Serial.print(petCount);
-  Serial.println(" pets");
-  
-  // If we're not running, pre-configure for the new mode using PiComm
-  if (currentState != STATE_RUNNING && piComm) {
-    int baseSpeed = 150;
-    float shoulderMaxSpeed = 30.0;
-    
-    switch (newMode) {
-      case MODE_ONE:
-        baseSpeed = 150;
-        shoulderMaxSpeed = 25.0;
-        break;
-      case MODE_TWO:
-        baseSpeed = 175;
-        shoulderMaxSpeed = 30.0;
-        break;
-      case MODE_THREE:
-        baseSpeed = 200;
-        shoulderMaxSpeed = 35.0;
-        break;
-      case MODE_FOUR:
-        baseSpeed = 225;
-        shoulderMaxSpeed = 40.0;
-        break;
-    }
-    
-    // Pre-configure systems (but don't start them)
-    PiResponse response = piComm->processCommand("PI:LBS," + String(baseSpeed));
-    if (response.success) {
-      Serial.println("✓ Base speed pre-configured to " + String(baseSpeed));
-    }
-    
-    response = piComm->processCommand("PI:SMS,-," + String(shoulderMaxSpeed) + ",-,-");
-    if (response.success) {
-      Serial.println("✓ Shoulder max speed pre-configured to " + String(shoulderMaxSpeed));
-    }
-  }
+  String status = "ESP:STATUS,";
+  status += getStateString(currentState) + ",";
+  status += String(getPetCount()) + ",";
+  status += (missionActive ? "ACTIVE" : "IDLE");
+  Serial.println(status);
 }
 
 // ============================================================================
@@ -641,7 +502,6 @@ void InputDisplay::printStatus() {
   Serial.print("Initialized: "); Serial.println(initialized ? "YES" : "NO");
   Serial.print("State: "); Serial.println(getStateString(currentState));
   Serial.print("Mode: "); Serial.print(getPetCount()); Serial.println(" pets");
-  Serial.print("PiComm: "); Serial.println(piComm ? "Available" : "NULL");
   Serial.println();
   
   Serial.println("Switches:");
@@ -663,7 +523,7 @@ void InputDisplay::printStatus() {
 }
 
 bool InputDisplay::isSystemHealthy() const {
-  return initialized && !hasError && systemReady && currentState != STATE_ERROR && piComm != nullptr;
+  return initialized && !hasError && systemReady && currentState != STATE_ERROR;
 }
 
 void InputDisplay::showError(const String& error) {
