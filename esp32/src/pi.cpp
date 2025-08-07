@@ -458,7 +458,7 @@ PiResponse PiComm::handleMissionComplete(const String& cmd) {
   }
 
   extern InputDisplay inputDisplay;
-  inputDisplay.setMissionActive(false);
+  inputDisplay.setSystemState(STATE_READY);
 
   return PiResponse(true, "Mission completed - system returned to ready state");
 }
