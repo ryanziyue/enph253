@@ -76,6 +76,9 @@ public:
   // status queries
   Point getCurrentPosition();
   bool isMoving() const;
+
+  // queries
+  float getBaseAngle() const;
   
   // debug
   void printStatus();
