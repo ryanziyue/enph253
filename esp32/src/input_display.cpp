@@ -80,8 +80,8 @@ bool InputDisplay::init() {
   
   // mark initialized state
   initialized = true;
-  currentState = STATE_READY;
-  systemReady = true;
+  currentState = STATE_INIT;
+  systemReady = false;
   inputs.display_needs_update = true;
   
   return true;
@@ -268,12 +268,17 @@ void InputDisplay::handleResetComplete() {
   
   switch (currentState) {
     case STATE_RUNNING:
-      setSystemState(STATE_READY);
+      setSystemState(STATE_INIT);
       sendResetCommand();
       break;
     case STATE_ERROR:
       clearErrors();
-      setSystemState(STATE_READY);
+      setSystemState(STATE_INIT);
+      break;
+    case STATE_READY:
+      setSystemState(STATE_INIT);
+      systemReady = false;
+      sendResetCommand();
       break;
       
     default:
