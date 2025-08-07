@@ -306,6 +306,8 @@ void InputDisplay::updateDisplayContent() {
   display.print(getPetCount());
   display.println(" pets");
   
+  display.setTextSize(1);
+  
   switch (currentState) {
     case STATE_INIT:
       display.println("initializing...");
