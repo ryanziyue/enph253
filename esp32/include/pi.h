@@ -44,6 +44,7 @@ private:
   PiResponse handleWristLockAngle(const String& cmd);               // PI:WLA,angle
   PiResponse handleAllServoSpeedsCommand(const String& cmd);        // PI:SS,base,shoulder,elbow,wrist
   PiResponse handleAllServoMaxSpeedsCommand(const String& cmd);     // PI:SMS,base,shoulder,elbow,wrist
+  PiResponse handleBaseAngleQuery(const String& cmd);               // PI:BASE
 
   // status and utility                                                   
   PiResponse handleStatusRequest(const String& cmd);                        
