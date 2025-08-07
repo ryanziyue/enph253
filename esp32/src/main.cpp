@@ -42,7 +42,7 @@ void setup() {
   arm.resetPosition();
   
   systemInitialized = true;
-  inputDisplay.setReady(true); 
+  // inputDisplay.setReady(true); 
 }
 
 void loop() {
@@ -58,6 +58,9 @@ void loop() {
     if (command.length() > 0) {
       if (command.equals("PI:READY")) {
         inputDisplay.setReady(true);
+        inputDisplay.setSystemState(STATE_READY);
+        inputDisplay.forceDisplayUpdate();
+        Serial.println("OKAY");
       } 
       else if (command.startsWith("PI:")) {
         PiResponse response = piComm.processCommand(command);
