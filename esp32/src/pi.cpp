@@ -66,6 +66,9 @@ PiResponse PiComm::processCommand(const String& cmd) {
   else if (cmd.startsWith("PI:SMS,")) {
     return handleAllServoMaxSpeedsCommand(cmd);
   }
+  else if (cmd.equals("PI:BASE")) {
+    return handleBaseAngleQuery(cmd);
+  }
   else if (cmd.equals("PI:STATUS")) {
     return handleStatusRequest(cmd);
   }
@@ -422,6 +425,22 @@ PiResponse PiComm::handleAllServoMaxSpeedsCommand(const String& cmd) {
   
   return PiResponse(true, "Servo max speeds set: base=" + parts[0] + 
                          " shoulder=" + parts[1] + " elbow=" + parts[2] + " wrist=" + parts[3]);
+}
+
+PiResponse PiComm::handleBaseAngleQuery(const String& cmd) {
+  if (!servos) {
+    return PiResponse(false, "servos not available");
+  }
+
+  float baseAngle = servos->getBaseAngle();
+
+  if (baseAngle < 0) {
+    return PiResponse(false, "servos not available");
+  }
+
+  String msg = "BASE" + String(baseAngle);
+
+  return PiResponse(true, "base angle retrieved", msg);
 }
 
 // ------- STATUS AND UTILITY COMMANDS ------- 
