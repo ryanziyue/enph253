@@ -17,7 +17,7 @@ InputDisplay inputDisplay;
 bool systemInitialized = false;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(921600);
   
   motors.init();
   arm.init();
