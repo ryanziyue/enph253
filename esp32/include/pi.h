@@ -34,7 +34,6 @@ private:
   PiResponse handleMotorCommand(const String& cmd);                 // PI:MC,x,y
   PiResponse handleMotorSampleCommand(const String& cmd);           // PI:MS
 
-  
   // command parsing helpers - ARM CONTROL
   PiResponse handleServoPositionCommand(const String& cmd);         // PI:SP,a,b,c
   PiResponse handleWristPositionCommand(const String& cmd);         // PI:WP,a
@@ -45,9 +44,13 @@ private:
   PiResponse handleWristLockAngle(const String& cmd);               // PI:WLA,angle
   PiResponse handleAllServoSpeedsCommand(const String& cmd);        // PI:SS,base,shoulder,elbow,wrist
   PiResponse handleAllServoMaxSpeedsCommand(const String& cmd);     // PI:SMS,base,shoulder,elbow,wrist
-  
-  // status and utility
-  PiResponse handleStatusRequest(const String& cmd);
+  PiResponse handleBaseAngleQuery(const String& cmd);               // PI:BASE
+
+  // status and utility                                                   
+  PiResponse handleStatusRequest(const String& cmd);                        
+
+  // mission functions                                                    
+  PiResponse handleMissionComplete(const String& cmd);              // PI:COMPLETE
 
 public:
   PiComm(MotorController* motor_ctrl, ServoController* servo_ctrl, LineFollower* line_follower);

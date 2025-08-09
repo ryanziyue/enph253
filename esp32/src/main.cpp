@@ -4,22 +4,21 @@
 #include "motor.h"
 #include "linefollower.h"
 #include "pi.h"
+#include "input_display.h"
 
-// create controller instances
+// Create controller instances
 ServoController arm;
 MotorController motors;
 LineFollower sensorLineFollower(&motors);
 PiComm piComm(&motors, &arm, &sensorLineFollower);
+InputDisplay inputDisplay;
 
-// system state
+// System state
 bool systemInitialized = false;
 
-void handleLocalCommand(String);
-
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(921600);
   
-  // initialize controllers
   motors.init();
   arm.init();
   
@@ -30,37 +29,44 @@ void setup() {
   sensorLineFollower.setTargetPosition(TARGET_POSITION);
   sensorLineFollower.setPID(K_P, K_I, K_D);
   sensorLineFollower.setKo(K_O);
-  
-  // configure sensor thresholds
   sensorLineFollower.setSensorThreshold(LineFollower::R1, SENSOR_THRESHOLD_R1);
   sensorLineFollower.setSensorThreshold(LineFollower::L1, SENSOR_THRESHOLD_L1);
   sensorLineFollower.setSensorThreshold(LineFollower::R2, SENSOR_THRESHOLD_R2);
   sensorLineFollower.setSensorThreshold(LineFollower::L2, SENSOR_THRESHOLD_L2);
+
+  if (!inputDisplay.init()) {
+    return;
+  }
   
   delay(1000);
   arm.resetPosition();
   
   systemInitialized = true;
+  // inputDisplay.setReady(true); 
 }
 
 void loop() {
   if (!systemInitialized) return;
   
-  // always update arm controller
   arm.update();
+  inputDisplay.update();
   
-  // handle serial commands
   if (Serial.available()) {
     String command = Serial.readStringUntil('\n');
     command.trim();
     
     if (command.length() > 0) {
-      if (command.startsWith("PI:")) {
-        // handle pi command
+      if (command.equals("PI:READY")) {
+        inputDisplay.setReady(true);
+        inputDisplay.setSystemState(STATE_READY);
+        inputDisplay.forceDisplayUpdate();
+        Serial.println("OKAY");
+      } 
+      else if (command.startsWith("PI:")) {
         PiResponse response = piComm.processCommand(command);
         piComm.sendResponse(response);
-      } else {
-        // handle local command
+      } 
+      else {
         handleLocalCommand(command);
       }
     }
@@ -85,19 +91,45 @@ void handleLocalCommand(String cmd) {
     sensorLineFollower.printStatus();
   }
   else if (cmd == "test") {
-    // Test Pi communication locally
     Serial.println("Testing Pi command: PI:STATUS");
     PiResponse response = piComm.processCommand("PI:STATUS");
     piComm.sendResponse(response);
   }
+  
+  else if (cmd == "input" || cmd == "display") {
+    inputDisplay.printStatus();
+  }
+  else if (cmd == "mode") {
+    Serial.print("Current mode: "); Serial.print(inputDisplay.getPetCount());
+    Serial.print(" pets"); Serial.println(inputDisplay.getSystemState());
+  }
+  else if (cmd == "teststart") {
+    Serial.println("Simulating start button press...");
+    // Test ESP command through Pi system
+    PiResponse response = piComm.processCommand("ESP:START," + String(inputDisplay.getPetCount()));
+    piComm.sendResponse(response);
+  }
+  else if (cmd == "testreset") {
+    Serial.println("Simulating reset command...");
+    // Test ESP command through Pi system
+    PiResponse response = piComm.processCommand("ESP:RESET");
+    piComm.sendResponse(response);
+  }
+  else if (cmd == "health") {
+    Serial.print("InputDisplay healthy: "); 
+    Serial.println(inputDisplay.isSystemHealthy() ? "YES" : "NO");
+  }
+  
   else {
-    Serial.println("Local commands: status, sensors, arm, lf, test");
+    Serial.println("=== Available Commands ===");
+    Serial.println("System: status, sensors, arm, lf, test");
+    Serial.println("Display: input, mode, teststart, testreset");
     Serial.println("Pi commands start with 'PI:'");
   }
 }
 
 void printSystemStatus() {
-  Serial.println("\n=== SYSTEM STATUS ===");
+  Serial.println("\n=== COMPLETE SYSTEM STATUS ===");
   Serial.print("System Initialized: "); Serial.println(systemInitialized ? "Yes" : "No");
   
   Serial.println("\n--- Motor Controller ---");
@@ -109,7 +141,7 @@ void printSystemStatus() {
   Serial.println("\n--- Arm Controller ---");
   arm.printStatus();
   
-  Serial.println("=====================\n");
+  Serial.println("===============================\n");
 }
 
 void emergencyStop() {
@@ -118,6 +150,9 @@ void emergencyStop() {
   motors.stop();
   sensorLineFollower.stop();
   arm.stopAll();
+  
+  inputDisplay.showError("EMERGENCY STOP");
+  inputDisplay.setSystemState(STATE_ERROR);
 
   Serial.println("ESP:EMERGENCY_STOP");
 }

@@ -1,5 +1,6 @@
 #include "pi.h"
 #include "main.h"
+#include "input_display.h"
 
 PiComm::PiComm(MotorController* motor_ctrl, ServoController* servo_ctrl, LineFollower* line_follower) 
   : motors(motor_ctrl), servos(servo_ctrl), lineFollower(line_follower) {}
@@ -64,6 +65,9 @@ PiResponse PiComm::processCommand(const String& cmd) {
   }
   else if (cmd.startsWith("PI:SMS,")) {
     return handleAllServoMaxSpeedsCommand(cmd);
+  }
+  else if (cmd.equals("PI:BASE")) {
+    return handleBaseAngleQuery(cmd);
   }
   else if (cmd.equals("PI:STATUS")) {
     return handleStatusRequest(cmd);
@@ -423,6 +427,22 @@ PiResponse PiComm::handleAllServoMaxSpeedsCommand(const String& cmd) {
                          " shoulder=" + parts[1] + " elbow=" + parts[2] + " wrist=" + parts[3]);
 }
 
+PiResponse PiComm::handleBaseAngleQuery(const String& cmd) {
+  if (!servos) {
+    return PiResponse(false, "servos not available");
+  }
+
+  float baseAngle = servos->getBaseAngle();
+
+  if (baseAngle < 0) {
+    return PiResponse(false, "servos not available");
+  }
+
+  String msg = "BASE" + String(baseAngle);
+
+  return PiResponse(true, "base angle retrieved", msg);
+}
+
 // ------- STATUS AND UTILITY COMMANDS ------- 
 
 PiResponse PiComm::handleStatusRequest(const String& cmd) {
@@ -440,6 +460,26 @@ PiResponse PiComm::handleStatusRequest(const String& cmd) {
                      "Motors:" + motorStatus + speedLimits;
   
   return PiResponse(true, "System status", statusData);
+}
+
+// ------- MISSION COMMANDS ------- 
+PiResponse PiComm::handleMissionComplete(const String& cmd) {
+  if (lineFollower && lineFollower->isRunning()) {
+    lineFollower->stop();
+  }
+
+  if (motors) {
+    motors->stop();
+  }
+
+  if (servos) {
+    servos->stopAll();
+  }
+
+  extern InputDisplay inputDisplay;
+  inputDisplay.setSystemState(STATE_READY);
+
+  return PiResponse(true, "Mission completed - system returned to ready state");
 }
 
 // replies to PI command

@@ -618,6 +618,11 @@ bool ServoController::isMoving() const {
   return ik_vel_enabled;
 }
 
+float ServoController::getBaseAngle() const {
+  if (!initialized) return -1;
+  return current_pos[IDX_BASE];
+}
+
 void ServoController::printStatus() {
   Serial.println("=== Servo Status ===");
   for (int i = 0; i < NUM_SERVOS; i++) {

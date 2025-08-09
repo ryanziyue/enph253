@@ -33,18 +33,18 @@
 // line following params
 #define K_P                     30.0
 #define K_I                     0.0
-#define K_D                     0.0
+#define K_D                     0.5
 #define K_O                     2.0
 #define TARGET_POSITION         150.0
 #define CURRENT_POSITION        0.0
-#define BASE_SPEED              190
-#define SENSOR_THRESHOLD_R1     2.0
-#define SENSOR_THRESHOLD_L1     2.0
-#define SENSOR_THRESHOLD_R2     2.0
-#define SENSOR_THRESHOLD_L2     2.0
+#define BASE_SPEED              150
+#define SENSOR_THRESHOLD_R1     2.5
+#define SENSOR_THRESHOLD_L1     2.5
+#define SENSOR_THRESHOLD_R2     2.2
+#define SENSOR_THRESHOLD_L2     2.3
 
 // speed parameters
-#define MOTOR_MIN_SPEED         175
+#define MOTOR_MIN_SPEED         0
 #define MOTOR_MAX_SPEED         255
 #define IDX_BASE_SPEED          45.0
 #define IDX_SHOULDER_SPEED      30.0
