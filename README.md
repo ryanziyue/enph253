@@ -34,12 +34,12 @@ python pi/robot_controller.py --serial-port /dev/ttyUSB0 --enable-gui
 ```
 	Raspberry Pi (Python)                               ESP32 (Firmware)
 ┌──────────────────────────────┐                  ┌──────────────────────────┐
-│ camera_manager.py (threads)  │  frames          │ motor.cpp                │
-│ line_following_manager.py    │──────────────►   │ linefollower.cpp (PID)   │
+│ camera_manager.py (threads)  │  serial cmds     │ motor.cpp                │
+│ line_following_manager.py    │────────────────► │ linefollower.cpp (PID)   │
 │ object_detection_manager.py  │                  │ arm.cpp (IK, servos)     │
 │ motor_controller.py          │  serial cmds     │ pi.cpp (command parser)  │
-│ arm_controller.py            │◄──────────────┐  │ input_display.cpp (UI)   │
-│ robot_controller.py (or GUI) │  status / ACK  │  │ custom_servo.cpp        │
+│ arm_controller.py            │◄─────────────────│ input_display.cpp (UI)   │
+│ robot_controller.py (or GUI) │  status / ACK    │ custom_servo.cpp         │
 └──────────────────────────────┘                  └──────────────────────────┘
 ```
 Closed-loop layering:
@@ -188,5 +188,6 @@ Add licensing statement here.
 ---
 ## Contributors
 List team members and roles.
+
 
 
