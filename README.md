@@ -158,14 +158,11 @@ Planar 2‑link solve with mechanical offsets; mirrored shoulder; wrist lock for
 Placeholder – add concrete size, time, scoring, object specs, attempt limits from official PDF.
 
 ---
-## Demonstration Videos (Placeholders)
+## Demonstration Videos
 | Scenario | Link |
 |----------|------|
-| Full Mission | (URL) |
-| Line Following | (URL) |
-| Object Detection | (URL) |
-| Pickup Sequence | (URL) |
-| Arm IK Demo | (URL) |
+| Full Mission | [YT link](https://youtu.be/eCi2i0b2N54) |
+| Line Following | [YT link](https://youtu.be/UnH2nF_ivgA) |
 
 ---
 ## Development
@@ -178,16 +175,9 @@ Placeholder – add concrete size, time, scoring, object specs, attempt limits f
 | Object detection test | `python pi/debug_object_detection.py` |
 
 ---
-## Extensibility
-Add command handlers in `PiComm` (ESP32) + corresponding Python wrapper; update JSON config for new models or camera IDs.
-
----
-## License
-Add licensing statement here.
-
----
 ## Contributors
-List team members and roles.
+Made with love and big way by Ryan Cheng, David Oh, Zachary Xie, Bowen Yuan
+
 
 
 
