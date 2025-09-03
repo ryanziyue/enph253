@@ -178,6 +178,16 @@ Placeholder – add concrete size, time, scoring, object specs, attempt limits f
 ## Contributors
 Made with love and big way by Ryan Cheng, David Oh, Zachary Xie, Bowen Yuan
 
+<div align="center">
+<img width="275" height="200" alt="image" src="https://github.com/user-attachments/assets/941ef203-157e-46ee-8f5e-a331419b92bb" />
+<img width="275" height="200" alt="image" src="https://github.com/user-attachments/assets/eba62d67-5784-4a90-9bf9-058d834cf812" />
+<br />
+<img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/5fd0345f-b9b7-4322-8fc0-4be0fbd295a9" />
+<img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/4df722c5-208c-4023-949b-51c94ad9994a" />
+<img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/daf5efb1-d9fa-491a-96ce-1b56e44ad43a" />
+</div>
+
+
 
 
 
