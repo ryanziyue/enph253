@@ -4,7 +4,7 @@ Autonomous competition robot integrating dual sensing (vision + reflectance), YO
 
 <div align="center" markdown="1">
 	<img height="400" alt="image" src="https://github.com/user-attachments/assets/271ba6ce-5686-4b20-8d25-800dc26e751f" />
-	<img height="400" alt="image" src="https://github.com/user-attachments/assets/9a0cc977-9c89-452c-bf60-5ee6a6419dc4" />
+	<img height="400" alt="image" src="https://github.com/user-attachments/assets/9a0cc977-9c89-452c-bf60-5ee6a6419dc4" /> <br />
 	<img height="300" alt="image" src="https://github.com/user-attachments/assets/3ed423ad-08a1-4e6c-8404-085384f53286" />
 	<img height="300" alt="image" src="https://github.com/user-attachments/assets/eb1df924-2a02-4151-b028-1515a0551caf" />
 </div>
@@ -196,6 +196,7 @@ Made with love and big way by Ryan Cheng, David Oh, Zachary Xie, Bowen Yuan
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/4df722c5-208c-4023-949b-51c94ad9994a" />
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/daf5efb1-d9fa-491a-96ce-1b56e44ad43a" />
 </div>
+
 
 
 
