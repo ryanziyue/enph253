@@ -13,6 +13,14 @@ Autonomous competition robot integrating dual sensing (vision + reflectance), YO
 </div>
 
 ---
+## Demonstration Videos
+| Scenario | Link |
+|----------|------|
+| Full Mission | [YT link](https://youtu.be/eCi2i0b2N54) |
+| Line Following | [YT link](https://youtu.be/UnH2nF_ivgA) |
+| Pet Tracking Example | [YT link](https://youtu.be/3Meb8kBMPbk) |
+
+---
 ## Quick Start
 1. Flash ESP32 firmware (PlatformIO project in `esp32/`).
 2. Connect ESP32 over USB; verify serial at 921600 baud.
@@ -167,12 +175,6 @@ Planar 2‑link solve with mechanical offsets; mirrored shoulder; wrist lock for
 ## Competition Rules (Insert Official Numbers)
 Placeholder – add concrete size, time, scoring, object specs, attempt limits from official PDF.
 
----
-## Demonstration Videos
-| Scenario | Link |
-|----------|------|
-| Full Mission | [YT link](https://youtu.be/eCi2i0b2N54) |
-| Line Following | [YT link](https://youtu.be/UnH2nF_ivgA) |
 
 ---
 ## Development
@@ -196,6 +198,7 @@ Made with love and big way by Ryan Cheng, David Oh, Zachary Xie, Bowen Yuan
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/4df722c5-208c-4023-949b-51c94ad9994a" />
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/daf5efb1-d9fa-491a-96ce-1b56e44ad43a" />
 </div>
+
 
 
 
