@@ -42,7 +42,6 @@ python pi/robot_controller.py --serial-port /dev/ttyUSB0 --enable-gui
 | `pi/YOLO_MODELS_GUIDE.md` | Model selection & notes. |
 | `pi/WINDOWS_SETUP.md` | Windows-specific environment setup. |
 | `pi/DOCUMENTATION.md` | Detailed vision + line following internals (imported into this README summary). |
-| `main/` | (Reserved) |
 
 ---
 ### System Architecture
@@ -196,6 +195,7 @@ Made with love and big way by Ryan Cheng, David Oh, Zachary Xie, Bowen Yuan
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/4df722c5-208c-4023-949b-51c94ad9994a" />
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/daf5efb1-d9fa-491a-96ce-1b56e44ad43a" />
 </div>
+
 
 
 
