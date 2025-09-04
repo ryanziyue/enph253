@@ -172,8 +172,9 @@ Planar 2‑link solve with mechanical offsets; mirrored shoulder; wrist lock for
 * Reset button (long hold) returns to READY state.
 
 ---
-### Competition Rules (Insert Official Numbers)
-Placeholder – add concrete size, time, scoring, object specs, attempt limits from official PDF.
+### Competition Rules
+Official competition rules for the robot can be found [here](https://docs.google.com/document/d/1uTwa8DMtBvLUz8N1geSQqHyW6fn-HD22/edit?rtpof=true&sd=true&tab=t.0).
+Apologies in advance if this link is no longer functional in the future! Send me a message and I may be able to email you a PDF or something...
 
 
 ---
@@ -198,6 +199,7 @@ Made with love and big way by Ryan Cheng, David Oh, Zachary Xie, Bowen Yuan
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/4df722c5-208c-4023-949b-51c94ad9994a" />
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/daf5efb1-d9fa-491a-96ce-1b56e44ad43a" />
 </div>
+
 
 
 
