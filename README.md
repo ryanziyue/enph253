@@ -1,9 +1,24 @@
-## ENPH 253 Competition Robot
+# ENPH 253 Competition Robot
 
 Autonomous competition robot integrating dual sensing (vision + reflectance), YOLO object detection, articulated arm with inverse kinematics, and a split architecture (Raspberry Pi high‑level + ESP32 real‑time control).
 
+<div align="center" markdown="1">
+	<img height="300" alt="image" src="https://github.com/user-attachments/assets/3ed423ad-08a1-4e6c-8404-085384f53286" />
+	<img height="300" alt="image" src="https://github.com/user-attachments/assets/eb1df924-2a02-4151-b028-1515a0551caf" /> <br/>
+	<img height="400" alt="image" src="https://github.com/user-attachments/assets/271ba6ce-5686-4b20-8d25-800dc26e751f" />
+	<img height="400" alt="image" src="https://github.com/user-attachments/assets/9a0cc977-9c89-452c-bf60-5ee6a6419dc4" />
+</div>
+
 ---
-## Quick Start
+### Demonstration Videos
+| Scenario | Link |
+|----------|------|
+| Full Mission | [YT link](https://youtu.be/eCi2i0b2N54) |
+| Line Following | [YT link](https://youtu.be/UnH2nF_ivgA) |
+| Pet Tracking Example | [YT link](https://youtu.be/3Meb8kBMPbk) |
+
+---
+### Quick Start
 1. Flash ESP32 firmware (PlatformIO project in `esp32/`).
 2. Connect ESP32 over USB; verify serial at 921600 baud.
 3. On the Pi / dev machine:
@@ -17,7 +32,7 @@ python pi/robot_controller.py --serial-port /dev/ttyUSB0 --enable-gui
 5. Begin mission (line following, detection, pickup sequence).
 
 ---
-## Repository Layout
+### Repository Layout
 | Path | Purpose |
 |------|---------|
 | `cad/` | Laser-cut DXF plates, 3D printed STL mounts, arm + camera hardware revisions. |
@@ -30,7 +45,7 @@ python pi/robot_controller.py --serial-port /dev/ttyUSB0 --enable-gui
 | `main/` | (Reserved) |
 
 ---
-## System Architecture
+### System Architecture
 ```
 	Raspberry Pi (Python)                               ESP32 (Firmware)
 ┌──────────────────────────────┐                  ┌──────────────────────────┐
@@ -47,7 +62,7 @@ Closed-loop layering:
 * Low-level (ESP32): deterministic PWM, reflectance PID, servo motion profiles, safety handling.
 
 ---
-## Firmware (ESP32)
+### Firmware (ESP32)
 Location: `esp32/`
 
 Build & flash:
@@ -67,7 +82,7 @@ Timing model:
 * Servo motion increments based on elapsed millis (no blocking delays).
 
 ---
-## High-Level Software (Raspberry Pi / PC)
+### High-Level Software (Raspberry Pi / PC)
 Location: `pi/`
 
 Install:
@@ -87,7 +102,7 @@ Key modules:
 * `robot_gui.py` / `object_detection_ui.py` / `line_following_ui.py` – Visualization & tuning.
 
 ---
-## Command Protocol (Pi <-> ESP32)
+### Command Protocol (Pi <-> ESP32)
 ASCII lines terminated by `\n`. Requests start with `PI:`. Selected handlers (see `pi.h`):
 
 | Command | Format | Purpose |
@@ -123,24 +138,24 @@ Example exchange:
 ```
 
 ---
-## Core Algorithms (Summary)
-### Reflectance Line Following (Firmware)
+### Core Algorithms (Summary)
+#### Reflectance Line Following (Firmware)
 4 analog sensors -> position estimate -> PID (Kp,Ki,Kd,Ko) -> differential motor PWM (clamped).
 
-### Vision Line Detection (Pi)
+#### Vision Line Detection (Pi)
 Row sampling + brightness threshold + brown rejection + weighted lateral error -> optional camera-mode PID.
 
-### Curve Detection
+#### Curve Detection
 Angle difference lower vs upper line segments > threshold => phase transition cue.
 
-### Object Detection
+#### Object Detection
 YOLO model (config JSON) with optional ROI cropping triggers pickup routine.
 
-### Arm IK
+#### Arm IK
 Planar 2‑link solve with mechanical offsets; mirrored shoulder; wrist lock for end-effector orientation.
 
 ---
-## Mission Flow (Reference)
+### Mission Flow (Reference)
 1. System init & servo home.
 2. Enable chosen line following mode.
 3. Track line; detect curve events for state changes.
@@ -149,23 +164,18 @@ Planar 2‑link solve with mechanical offsets; mirrored shoulder; wrist lock for
 6. Resume or terminate mission.
 
 ---
-## Safety
+### Safety
 * Emergency stop halts motors, stops tasks, reports `ESP:EMERGENCY_STOP`.
 * Reset button (long hold) returns to READY state.
 
 ---
-## Competition Rules (Insert Official Numbers)
-Placeholder – add concrete size, time, scoring, object specs, attempt limits from official PDF.
+### Competition Rules
+Official competition rules for the robot can be found [here](https://docs.google.com/document/d/1uTwa8DMtBvLUz8N1geSQqHyW6fn-HD22/edit?rtpof=true&sd=true&tab=t.0).
+Apologies in advance if this link is no longer functional in the future! Send me a message and I may be able to email you a PDF or something...
+
 
 ---
-## Demonstration Videos
-| Scenario | Link |
-|----------|------|
-| Full Mission | [YT link](https://youtu.be/eCi2i0b2N54) |
-| Line Following | [YT link](https://youtu.be/UnH2nF_ivgA) |
-
----
-## Development
+### Development
 | Task | Example |
 |------|---------|
 | Flash firmware | `pio run -t upload` |
@@ -175,7 +185,7 @@ Placeholder – add concrete size, time, scoring, object specs, attempt limits f
 | Object detection test | `python pi/debug_object_detection.py` |
 
 ---
-## Contributors
+### Contributors
 Made with love and big way by Ryan Cheng, David Oh, Zachary Xie, Bowen Yuan
 
 <div align="center">
@@ -186,6 +196,14 @@ Made with love and big way by Ryan Cheng, David Oh, Zachary Xie, Bowen Yuan
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/4df722c5-208c-4023-949b-51c94ad9994a" />
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/daf5efb1-d9fa-491a-96ce-1b56e44ad43a" />
 </div>
+
+
+
+
+
+
+
+
 
 
 
