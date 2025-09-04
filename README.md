@@ -35,7 +35,7 @@ python pi/robot_controller.py --serial-port /dev/ttyUSB0 --enable-gui
 ### Repository Layout
 | Path | Purpose |
 |------|---------|
-| `cad/` | Laser-cut DXF plates, 3D printed STL mounts, arm + camera hardware revisions. |
+| `cad/` | Laser-cut DXF plates, 3D printed STL mounts, arm + camera hardware revisions. May be missing some components :( |
 | `esp32/` | Low-level real‑time firmware: motors, servos, reflectance sensors, OLED UI, command parser. |
 | `pi/` | High‑level Python subsystems: camera manager, line following (vision), object detection, arm + motor coordination, GUIs & diagnostics. |
 | `pi/*.json` | Runtime configuration (cameras, serial, object detection, chunk configs). |
@@ -196,6 +196,7 @@ Made with love and big way by Ryan Cheng, David Oh, Zachary Xie, Bowen Yuan
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/4df722c5-208c-4023-949b-51c94ad9994a" />
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/daf5efb1-d9fa-491a-96ce-1b56e44ad43a" />
 </div>
+
 
 
 
