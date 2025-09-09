@@ -1,4 +1,4 @@
-# ENPH 253 Competition Robot
+# ENPH 253 Robot
 
 Autonomous competition robot integrating dual sensing (vision + reflectance), YOLO object detection, articulated arm with inverse kinematics, and a split architecture (Raspberry Pi high‑level + ESP32 real‑time control).
 
@@ -195,6 +195,7 @@ Made with love and big way by Ryan Cheng, David Oh, Zachary Xie, Bowen Yuan
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/4df722c5-208c-4023-949b-51c94ad9994a" />
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/daf5efb1-d9fa-491a-96ce-1b56e44ad43a" />
 </div>
+
 
 
 
